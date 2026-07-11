@@ -1,0 +1,5 @@
+streamlit
+dhanhq
+pandas
+requests
+numpy
