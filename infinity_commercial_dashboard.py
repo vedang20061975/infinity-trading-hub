@@ -1,15 +1,10 @@
 import streamlit as st
+from dhanhq import dhanhq
 import pandas as pd
 import requests
 import io
 import numpy as np
 from datetime import datetime, timedelta
-
-# 🎯 DHANHQ MODULE ERROR BYPASS ENGINE
-try:
-    from dhanhq import dhanhq
-except ImportError:
-    st.error("dhanhq library is missing. Please check requirements.txt")
 
 # =====================================
 # PAGE & THEME CONFIGURATION
@@ -53,18 +48,8 @@ st.sidebar.info("💡 **Commercial Note:** 10M સેક્શનમાં હ�
 CLIENT_ID = "1108096138"
 ACCESS_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJkaGFuIiwicGFydG5lcklkIjoiIiwiZXhwIjoxNzgzODU5MDEwLCJpYXQiOjE3ODM3NzI2MTAsInRva2VuQ29uc3VtZXJUeXBlIjoiU0VMRiIsIndlYmhvb2tVcmwiOiIiLCJkaGFuQ2xpZW50SWQiOiIxMTA4MDk2MTM4In0.rk9JEQRmoYKmB5pQ9PWrY9KmYLJYW7jAqDt-EeGFCKIDw0OwMiDa0cJzAbI81YzX92FkrTEIdChtiATxZrJ1CQ"
 
-# 🎯 SAFE DYNAMIC CONFIGURATION FOR CLOUD AND LOCAL
-try:
-    # First priority: standard module instantiation
-    dhan = dhanhq(client_id=str(CLIENT_ID), access_token=str(ACCESS_TOKEN))
-except TypeError:
-    try:
-        # Second priority: position parameters fallback
-        dhan = dhanhq(str(CLIENT_ID), str(ACCESS_TOKEN))
-    except Exception:
-        # Third priority: core module instance wrapper shortcut
-        import dhanhq as config_module
-        dhan = config_module.dhanhq(str(CLIENT_ID), str(ACCESS_TOKEN))
+# 🎯 2026 OFFICIAL KEYWORD INITIALIZATION (No More TypeErrors)
+dhan = dhanhq(client_id=CLIENT_ID, access_token=ACCESS_TOKEN)
 
 WATCHLIST = [
     "ABB", "ACC", "ADANIENT", "ADANIGREEN", "ADANIPORTS", "ADANIPOWER", "AMBUJACEM", "APOLLOHOSP", 
@@ -222,7 +207,7 @@ if selected_scanner == "🎯 10-Minute AI KNN Intraday":
                             is_fresh_candle_cross = (knnMA_.iloc[-1] > MAknn_.iloc[-1] and knnMA_.iloc[-3] <= MAknn_.iloc[-3])
                             
                             if is_fresh_candle_cross:
-                                st.toast(f"🔔 ALERT: {stock} માં ૧ો મિનિટ પર બિલકુલ હમણાં ફ્રેશ ક્રોસઓવર થયો છે!", icon="🔥")
+                                st.toast(f"🔔 ALERT: {stock} માં ૧૦ મિનિટ પર બિલકુલ હમણાં ફ્રેશ ક્રોસઓવર થયો છે!", icon="🔥")
                                 alert_triggered = True
                                 
                             results.append({
