@@ -1,20 +1,10 @@
 import streamlit as st
+from dhanhq import dhanhq
 import pandas as pd
 import requests
 import io
 import numpy as np
 from datetime import datetime, timedelta
-
-# 🎯 DHAN CLOUD BYPASS ARChITECTURE
-try:
-    import dhanhq
-    # Dynamic discovery of class structures to prevent TypeError on cloud environments
-    if hasattr(dhanhq, 'dhanhq'):
-        dhan_class = getattr(dhanhq, 'dhanhq')
-    else:
-        dhan_class = dhanhq
-except ImportError:
-    st.error("dhanhq library is missing in your requirements.txt")
 
 # =====================================
 # PAGE & THEME CONFIGURATION
@@ -58,11 +48,8 @@ st.sidebar.info("💡 **Commercial Note:** 10M સેક્શનમાં હ�
 CLIENT_ID = "1108096138"
 ACCESS_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJkaGFuIiwicGFydG5lcklkIjoiIiwiZXhwIjoxNzgzODU5MDEwLCJpYXQiOjE3ODM3NzI2MTAsInRva2VuQ29uc3VtZXJUeXBlIjoiU0VMRiIsIndlYmhvb2tVcmwiOiIiLCJkaGFuQ2xpZW50SWQiOiIxMTA4MDk2MTM4In0.rk9JEQRmoYKmB5pQ9PWrY9KmYLJYW7jAqDt-EeGFCKIDw0OwMiDa0cJzAbI81YzX92FkrTEIdChtiATxZrJ1CQ"
 
-# 🎯 SAFE ENGINE INSTANTIATION WITHOUT POSITIONAL/KEYWORD CONFLICTS
-try:
-    dhan = dhan_class(client_id=str(CLIENT_ID), access_token=str(ACCESS_TOKEN))
-except Exception:
-    dhan = dhan_class(str(CLIENT_ID), str(ACCESS_TOKEN))
+# 🎯 ULTIMATE TYPE-ERROR FIX FOR SERVERS (Pure Class Initialization via Named Parameters)
+dhan = dhanhq(client_id=str(CLIENT_ID), access_token=str(ACCESS_TOKEN))
 
 WATCHLIST = [
     "ABB", "ACC", "ADANIENT", "ADANIGREEN", "ADANIPORTS", "ADANIPOWER", "AMBUJACEM", "APOLLOHOSP", 
