@@ -1,5 +1,5 @@
-streamlit==1.32.0
+streamlit
 pandas
 requests
 numpy
-dhanhq==1.1.1
+dhanhq
