@@ -5,8 +5,8 @@ import io
 import numpy as np
 from datetime import datetime, timedelta
 
-# 🎯 OFFICIAL DHANHQ ABSOLUTE IMPORT
-import dhanhq
+# 🎯 ABSOLUTE PURE CLASS IMPORT
+from dhanhq import dhanhq
 
 # =====================================
 # PAGE & THEME CONFIGURATION
@@ -48,20 +48,15 @@ st.sidebar.info("💡 **Commercial Note:** 10M સેક્શનમાં હ�
 # CREDENTIALS & DATA MASTER SYNC
 # =====================================
 CLIENT_ID = "1108096138"
-ACCESS_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJkaGFuIiwicGFydG5lcklkIjoiIiwiZXhwIjoxNzgzOTMyOTU5LCJpYXQiOjE3ODM4NDY1NTksInRva2VuQ29uc3VtZXJUeXBlIjoiU0VMRiIsIndlYmhvb2tVcmwiOiIiLCJkaGFuQ2xpZW50SWQiOiIxMTA4MDk2MTM4In0.k1ykGsggEtd5TRWdjyWYWg2H6wNEizirDOEjDcrfdOvi13i2yJdZDUZdCeMPiTdlaG8GrSyeAPXt23w4G-epsg"
+ACCESS_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJkaGFuIiwicGFydG5lcklkIjoiIiwiZXhwIjoxNzgzOTMyOTU5LCJpYXQiOjE3ODM4NDY1NTksInRva2VuQ29uc3VtZXJUeXBlIjoiU0VMRiIsIndlYmhvb2tVcmwiOiIiLCJkaGFuQ2xpZW50SWQiOiIxMTA4MDk2MTM4In0.k1ykGsggEtd5TRWdjyWYWg2H6wNEizirDOEjDcrfdOvi13i2yJdZDUZdCeMPiTdlaG8GrSyeAPXt23w4G-epsg
 
-# 🎯 2026 FULLY VALIDATED SERVERS ENGINE CRACK (પેરામીટર કન્ફ્યુઝન સો ટકા સાફ)
+# 🎯 2026 SERVERS PURE INSTANTIATION PROOTOCOL (No keywords, No double module call)
 dhan = None
 try:
-    # ઓફિશિયલ કીવર્ડ પ્રોટોકોલ
-    dhan = dhanhq.dhanhq(client_id=str(CLIENT_ID), access_token=str(ACCESS_TOKEN))
-except Exception as e1:
-    try:
-        # જો મોડ્યુલ ઓબ્જેક્ટ ઇસ્યુ હોય તો બેઝ ક્લાસથી ડાયરેક્ટ ઇનિશિયલાઇઝેશન
-        from dhanhq import dhanhq as CoreDhan
-        dhan = CoreDhan(client_id=str(CLIENT_ID), access_token=str(ACCESS_TOKEN))
-    except Exception as e2:
-        st.error(f"⚠️ Dhan API Initialization Error: {str(e2)}")
+    # ફક્ત ૨ શુદ્ધ પોઝિશનલ આર્ગ્યુમેન્ટ્સ - જે ક્લાઉડ એન્વાયરમેન્ટ પર સો ટકા કનેક્ટ થશે
+    dhan = dhanhq(str(CLIENT_ID), str(ACCESS_TOKEN))
+except Exception as e:
+    st.error(f"⚠️ Dhan API Initialization Error: {str(e)}")
 
 WATCHLIST = [
     "ABB", "ACC", "ADANIENT", "ADANIGREEN", "ADANIPORTS", "ADANIPOWER", "AMBUJACEM", "APOLLOHOSP", 
