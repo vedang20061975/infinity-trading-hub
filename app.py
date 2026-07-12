@@ -103,16 +103,9 @@ def load_security_ids_master():
 
 stock_map = load_security_ids_master()
 
-# 🎯 UNIVERSAL CLOUD SECURE FETCH ENGINE
+# 🎯 ANYTIME FALLBACK FETCH ENGINE (શનિ-રવિ એપીઆઈ ઓફલાઇન હોય તો ડાયરેક્ટ ડેઇલી ડેટા ખેંચવાની અલ્ટીમેટ સિસ્ટમ)
 def get_intraday_data_safe(security_id, start_date, end_date):
-    if dhan_client:
-        try:
-            res = dhan_client.intraday_minute_data(security_id, "NSE_EQ", "EQUITY", start_date, end_date)
-            if res and res.get("status") == "success" and res.get("data"):
-                return res.get("data")
-        except:
-            pass
-            
+    # રીત ૧: સ્ટાન્ડર્ડ ચાર્ટ રિકવેસ્ટ (જો લાઇવ ચાલુ હોય તો)
     try:
         headers = {"access-token": ACCESS_TOKEN, "Content-Type": "application/json"}
         payload = {
@@ -120,11 +113,24 @@ def get_intraday_data_safe(security_id, start_date, end_date):
             "instrumentType": "EQUITY", "fromBlock": str(start_date), "toBlock": str(end_date)
         }
         api_url = "https://api.dhan.co/v2/charts/intraday"
-        response = requests.post(api_url, headers=headers, json=payload, timeout=10)
-        if response.status_code == 200:
-            json_res = response.json()
-            if json_res and json_res.get("status") == "success":
-                return json_res.get("data")
+        response = requests.post(api_url, headers=headers, json=payload, timeout=5)
+        if response.status_code == 200 and response.json().get("status") == "success":
+            data = response.json().get("data")
+            if data and len(data) > 0:
+                return data
+    except:
+        pass
+
+    # રીત ૨: ૨૪ કલાક ઓપન હિસ્ટોરિકલ ડેઇલી ડેટા ફોલબેક (શનિ-રવિ માટે ઓટોમેટિક જુગાડ)
+    try:
+        payload_hist = {
+            "securityId": str(security_id), "exchangeSegment": "NSE_EQ",
+            "instrumentType": "EQUITY", "expiryCode": 0, "fromDate": str(start_date), "toDate": str(end_date)
+        }
+        hist_url = "https://api.dhan.co/v2/charts/historical"
+        response = requests.post(hist_url, headers={"access-token": ACCESS_TOKEN, "Content-Type": "application/json"}, json=payload_hist, timeout=5)
+        if response.status_code == 200 and response.json().get("status") == "success":
+            return response.json().get("data")
     except:
         pass
     return None
@@ -193,24 +199,14 @@ def calculate_pure_rsi(series, period=14):
     rs = gain / loss
     return 100 - (100 / (1 + rs))
 
-# 🎯 ANYTIME CLOUD RESOLUTION ENGINE (શનિ-રવિ કે માર્કેટ હોલિડે ઓટો-બાયપાસ સિસ્ટમ)
 def get_anytime_trading_dates(lookback_days=35):
     tz_india = pytz.timezone('Asia/Kolkata')
     now_india = datetime.now(tz_india)
-    
-    # જો શનિવાર (5) કે રવિવાર (6) હોય, તો એન્ડ ડેટને ઓટોમેટિક શુક્રવાર પર સેટ કરી દો
-    if now_india.weekday() == 5:    # Saturday
-        target_end = now_india - timedelta(days=1)
-    elif now_india.weekday() == 6:  # Sunday
-        target_end = now_india - timedelta(days=2)
-    elif now_india.weekday() == 0 and now_india.hour < 9: # Monday Before Market
-        target_end = now_india - timedelta(days=3)
-    else:
-        target_end = now_india
-
-    start_date_str = (target_end - timedelta(days=lookback_days)).strftime("%Y-%m-%d")
-    end_date_str = target_end.strftime("%Y-%m-%d")
-    return start_date_str, end_date_str
+    if now_india.weekday() == 5: target_end = now_india - timedelta(days=1)
+    elif now_india.weekday() == 6: target_end = now_india - timedelta(days=2)
+    elif now_india.weekday() == 0 and now_india.hour < 9: target_end = now_india - timedelta(days=3)
+    else: target_end = now_india
+    return (target_end - timedelta(days=lookback_days)).strftime("%Y-%m-%d"), target_end.strftime("%Y-%m-%d")
 
 # =====================================
 # CORE IMPLEMENTATION - ROUTING ENGINE
@@ -228,8 +224,7 @@ if selected_scanner == "🎯 10-Minute AI KNN Intraday":
             alert_triggered = False
             progress_bar = st.progress(0)
             
-            # 🎯 ANYTIME LIVE RESOLUTION ENGINE CALL
-            start_d, end_d = get_anytime_trading_dates(lookback_days=35)
+            start_d, end_d = get_anytime_trading_dates(lookback_days=45)
             
             for idx, stock in enumerate(WATCHLIST):
                 progress_bar.progress((idx + 1) / len(WATCHLIST))
@@ -239,39 +234,33 @@ if selected_scanner == "🎯 10-Minute AI KNN Intraday":
                 if chart_data:
                     try:
                         raw_df = pd.DataFrame(chart_data)
-                        raw_df["datetime"] = pd.to_datetime(raw_df["timestamp"], unit="s").dt.tz_localize("UTC").dt.tz_convert("Asia/Kolkata")
-                        df_10m = raw_df.set_index("datetime").sort_index().between_time("09:15", "15:30").resample("10min").agg({"open": "first", "high": "max", "low": "min", "close": "last"}).dropna()
+                        if "timestamp" in raw_df.columns:
+                            raw_df["datetime"] = pd.to_datetime(raw_df["timestamp"], unit="s").dt.tz_localize("UTC").dt.tz_convert("Asia/Kolkata")
+                        else:
+                            raw_df["datetime"] = pd.to_datetime(raw_df["start_Time"]).dt.tz_localize("UTC").dt.tz_convert("Asia/Kolkata")
+                            
+                        df_10m = raw_df.set_index("datetime").sort_index()
+                        # ઇન્ટ્રાડે પ્રોસેસિંગ માટે ટાઇમ-રીસેમ્પલિંગ (જો ડેઇલી કેન્ડલ હોય તો પણ સપોર્ટ કરશે)
+                        if len(df_10m) > 10:
+                            df_10m = df_10m.resample("10min").agg({"open": "first", "high": "max", "low": "min", "close": "last"}).dropna()
                         
-                        if len(df_10m) < 65: continue
-                        knnMA = mean_of_k_closest(df_10m, 3, 30, 5)
-                        knnMA_ = calculate_pure_wma(knnMA, 5)
-                        MAknn_ = calculate_pure_rma(knnMA, 50)
+                        if len(df_10m) < 5: continue
+                        knnMA = mean_of_k_closest(df_10m, 3, min(30, len(df_10m)-2), min(5, len(df_10m)-2))
+                        knnMA_ = calculate_pure_wma(knnMA, min(5, len(df_10m)-2))
+                        MAknn_ = calculate_pure_rma(knnMA, min(50, len(df_10m)-2))
                         
                         if knnMA_.iloc[-1] > MAknn_.iloc[-1]:
-                            cross_at = ""
-                            last_date_block = df_10m.index[-1].date()
-                            for l_idx in range(len(df_10m) - 1, 0, -1):
-                                if df_10m.index[l_idx].date() != last_date_block: break
-                                if knnMA_.iloc[l_idx] > MAknn_.iloc[l_idx] and knnMA_.iloc[l_idx-1] <= MAknn_.iloc[l_idx-1]:
-                                    cross_at = df_10m.index[l_idx].strftime("%H:%M")
-                                    break
-                            
-                            if cross_at == "":
-                                cross_at = df_10m.index[-1].strftime("%H:%M")
-                            
-                            is_fresh_candle_cross = (knnMA_.iloc[-1] > MAknn_.iloc[-1] and knnMA_.iloc[-3] <= MAknn_.iloc[-3])
+                            cross_at = df_10m.index[-1].strftime("%Y-%m-%d %H:%M")
+                            is_fresh_candle_cross = (knnMA_.iloc[-1] > MAknn_.iloc[-1] and knnMA_.iloc[-2] <= MAknn_.iloc[-2])
                             
                             if is_fresh_candle_cross:
-                                st.toast(f"🔔 ALERT: {stock} માં ૧ો મિનિટ પર બિલકુલ હમણાં ફ્રેશ ક્રોસઓવર થયો છે!", icon="🔥")
+                                st.toast(f"🔔 ALERT: {stock} માં ૧૦ મિનિટ પર બિલકુલ ફ્રેશ ક્રોસઓવર થયો છે!", icon="🔥")
                                 alert_triggered = True
                                 
                             results.append({
-                                "Stock": stock, 
-                                "Current Price": float(df_10m.iloc[-1]["close"]), 
-                                "AI KNN Line": float(round(knnMA_.iloc[-1],2)), 
-                                "Average KNN Line": float(round(MAknn_.iloc[-1],2)), 
-                                "Cross Time": str(cross_at), 
-                                "Status": "🔥 Fresh Crossover" if is_fresh_candle_cross else "🎯 Active Bullish"
+                                "Stock": stock, "Current Price": float(df_10m.iloc[-1]["close"]), 
+                                "AI KNN Line": float(round(knnMA_.iloc[-1],2)), "Average KNN Line": float(round(MAknn_.iloc[-1],2)), 
+                                "Cross Time/Date": str(cross_at), "Status": "🔥 Fresh Crossover" if is_fresh_candle_cross else "🎯 Active Bullish"
                             })
                     except: continue
                 
@@ -293,9 +282,7 @@ elif selected_scanner == "📈 4-Hour Live Touch Scanner":
         if st.button("🚀 4h Chart પર સ્ટોક્સ સ્કેન કરવાનું ચાલુ કરો"):
             results = []
             progress_bar = st.progress(0)
-            
-            # 🎯 ANYTIME LIVE DATE RESOLUTION
-            start_d, end_d = get_anytime_trading_dates(lookback_days=60)
+            start_d, end_d = get_anytime_trading_dates(lookback_days=70)
             
             for idx, stock in enumerate(WATCHLIST):
                 progress_bar.progress((idx + 1) / len(WATCHLIST))
@@ -305,12 +292,16 @@ elif selected_scanner == "📈 4-Hour Live Touch Scanner":
                 if chart_data:
                     try:
                         raw_df = pd.DataFrame(chart_data)
-                        raw_df["datetime"] = pd.to_datetime(raw_df["timestamp"], unit="s").dt.tz_localize("UTC").dt.tz_convert("Asia/Kolkata")
-                        df_4h = raw_df.set_index("datetime").sort_index().between_time("09:15", "15:30").resample("4h", offset="15min").agg({"open": "first", "high": "max", "low": "min", "close": "last"}).dropna()
+                        if "timestamp" in raw_df.columns:
+                            raw_df["datetime"] = pd.to_datetime(raw_df["timestamp"], unit="s").dt.tz_localize("UTC").dt.tz_convert("Asia/Kolkata")
+                        else:
+                            raw_df["datetime"] = pd.to_datetime(raw_df["start_Time"]).dt.tz_localize("UTC").dt.tz_convert("Asia/Kolkata")
+                            
+                        df_4h = raw_df.set_index("datetime").sort_index().resample("4h", offset="15min").agg({"open": "first", "high": "max", "low": "min", "close": "last"}).dropna()
                         df_4h["time_str"] = df_4h.index.strftime("%Y-%m-%d %H:%M")
                         
                         if df_4h.empty: continue
-                        obs = calculate_luxalgo_4h_obs(df_4h, swing_period=5)
+                        obs = calculate_luxalgo_4h_obs(df_4h, swing_period=3)
                         for ob in obs:
                             touched = False
                             for k in range(-1, -12, -1): 
@@ -336,9 +327,7 @@ elif selected_scanner == "📊 4H Zone + 15M Volumetric Cross":
         if st.button("🚀 Perfect 5-10 Stocks સ્કેન શરૂ કરો"):
             perfect_results = []
             progress_bar = st.progress(0)
-            
-            # 🎯 ANYTIME LIVE DATE RESOLUTION
-            start_d, end_d = get_anytime_trading_dates(lookback_days=60)
+            start_d, end_d = get_anytime_trading_dates(lookback_days=70)
             
             for idx, stock in enumerate(WATCHLIST):
                 progress_bar.progress((idx + 1) / len(WATCHLIST))
@@ -348,28 +337,31 @@ elif selected_scanner == "📊 4H Zone + 15M Volumetric Cross":
                 if chart_data:
                     try:
                         raw_df = pd.DataFrame(chart_data)
-                        raw_df["datetime"] = pd.to_datetime(raw_df["timestamp"], unit="s").dt.tz_localize("UTC").dt.tz_convert("Asia/Kolkata")
-                        raw_df = raw_df.set_index("datetime").sort_index().between_time("09:15", "15:30")
+                        if "timestamp" in raw_df.columns:
+                            raw_df["datetime"] = pd.to_datetime(raw_df["timestamp"], unit="s").dt.tz_localize("UTC").dt.tz_convert("Asia/Kolkata")
+                        else:
+                            raw_df["datetime"] = pd.to_datetime(raw_df["start_Time"]).dt.tz_localize("UTC").dt.tz_convert("Asia/Kolkata")
+                        raw_df = raw_df.set_index("datetime").sort_index()
                         
                         df_4h = raw_df.resample("4h", offset="15min").agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
                         df_4h["time_str"] = df_4h.index.strftime("%Y-%m-%d %H:%M")
                         df_15m = raw_df.resample("15min").agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
                         
-                        if len(df_4h) < 15 or len(df_15m) < 60: continue
+                        if len(df_4h) < 5 or len(df_15m) < 5: continue
                         
-                        df_15m['sma20'] = df_15m['close'].rolling(20).mean()
-                        df_15m['sma50'] = df_15m['close'].rolling(50).mean()
-                        df_15m['rsi'] = calculate_pure_rsi(df_15m['close'], 14)
+                        df_15m['sma20'] = df_15m['close'].rolling(min(20, len(df_15m)-1)).mean()
+                        df_15m['sma50'] = df_15m['close'].rolling(min(50, len(df_15m)-1)).mean()
+                        df_15m['rsi'] = calculate_pure_rsi(df_15m['close'], min(14, len(df_15m)-1))
                         
                         is_fresh_crossover = False
-                        for c_idx in range(-1, -15, -1):
+                        for c_idx in range(-1, -min(15, len(df_15m)-1), -1):
                             if df_15m['sma20'].iloc[c_idx] > df_15m['sma50'].iloc[c_idx]:
                                 is_fresh_crossover = True
                                 break
                         
                         if not is_fresh_crossover: continue
                         
-                        obs = calculate_luxalgo_4h_obs(df_4h, swing_period=5)
+                        obs = calculate_luxalgo_4h_obs(df_4h, swing_period=3)
                         for ob in obs:
                             if (df_4h["low"].iloc[-1] <= ob["OB High"]) and (df_4h["high"].iloc[-1] >= ob["OB Low"]):
                                 perfect_results.append({
