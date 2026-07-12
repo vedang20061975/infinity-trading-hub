@@ -4,7 +4,7 @@ import requests
 import io
 import numpy as np
 from datetime import datetime, timedelta
-import pytz  # 🎯 ઇન્ડિયન ટાઇમ ઝોન માટે
+import pytz
 
 # 🎯 SECURITY INSULATED IMPORTER
 try:
@@ -81,7 +81,7 @@ WATCHLIST = [
     "AARTIIND", "ABFRL", "ABBOTINDIA", "ABCAPITAL", "ALKEM", "APLLTD", "APOLLOTYRE", "ASHOKLEY", 
     "ASTRAL", "ATUL", "AUROPHARMA", "BALRAMCHIN", "BANDHANBNK", "BATAINDIA", "BERGEPAINT", "BHARATFORG", 
     "CHAMBLFERT", "CHOLAMANDAL", "COROMANDEL", "CROMPTON", "DEEPAKNTR", "DELTACORP", "ESCORTS", "EXIDEIND", 
-    "FEDERALBNK", "GLENMARK", "GODREJPROP", "GRANULES", "GUJGASLTD", "HAL", "HINDCOPPER", "IBULHSGFIN", 
+    "FEDERALBNK", "GLenMARK", "GODREJPROP", "GRANULES", "GUJGASLTD", "HAL", "HINDCOPPER", "IBULHSGFIN", 
     "IDFCFIRSTB", "IEX", "IGL", "INDHOTEL", "INDIACEM", "INDIAMART", "IPCALAB", "JKCEMENT", 
     "JUBLFOOD", "L&TFH", "LALPATHLAB", "LUPIN", "M&MFIN", "MANAPPURAM", "METROPOLIS", "MFSL", 
     "MGL", "MPHASIS", "MRF", "NATIONALUM", "NAVINFLUOR", "NMDC", "OBEROIRLTY", "OFSS", 
@@ -193,13 +193,28 @@ def calculate_pure_rsi(series, period=14):
     rs = gain / loss
     return 100 - (100 / (1 + rs))
 
+# 🎯 ANYTIME CLOUD RESOLUTION ENGINE (શનિ-રવિ કે માર્કેટ હોલિડે ઓટો-બાયપાસ સિસ્ટમ)
+def get_anytime_trading_dates(lookback_days=35):
+    tz_india = pytz.timezone('Asia/Kolkata')
+    now_india = datetime.now(tz_india)
+    
+    # જો શનિવાર (5) કે રવિવાર (6) હોય, તો એન્ડ ડેટને ઓટોમેટિક શુક્રવાર પર સેટ કરી દો
+    if now_india.weekday() == 5:    # Saturday
+        target_end = now_india - timedelta(days=1)
+    elif now_india.weekday() == 6:  # Sunday
+        target_end = now_india - timedelta(days=2)
+    elif now_india.weekday() == 0 and now_india.hour < 9: # Monday Before Market
+        target_end = now_india - timedelta(days=3)
+    else:
+        target_end = now_india
+
+    start_date_str = (target_end - timedelta(days=lookback_days)).strftime("%Y-%m-%d")
+    end_date_str = target_end.strftime("%Y-%m-%d")
+    return start_date_str, end_date_str
+
 # =====================================
 # CORE IMPLEMENTATION - ROUTING ENGINE
 # =====================================
-
-# 🎯 IST TIME BLOCK FOR SCRIPTS
-tz_india = pytz.timezone('Asia/Kolkata')
-now_india = datetime.now(tz_india)
 
 if selected_scanner == "🎯 10-Minute AI KNN Intraday":
     st.subheader("🎯 10-Minute AI KNN Intraday Gold Scanner")
@@ -213,9 +228,8 @@ if selected_scanner == "🎯 10-Minute AI KNN Intraday":
             alert_triggered = False
             progress_bar = st.progress(0)
             
-            # 🎯 CLOUD ANYTIME TIME-DELTA RESOLUTION BLOCK
-            start_d = (now_india - timedelta(days=35)).strftime("%Y-%m-%d")
-            end_d = now_india.strftime("%Y-%m-%d")
+            # 🎯 ANYTIME LIVE RESOLUTION ENGINE CALL
+            start_d, end_d = get_anytime_trading_dates(lookback_days=35)
             
             for idx, stock in enumerate(WATCHLIST):
                 progress_bar.progress((idx + 1) / len(WATCHLIST))
@@ -248,7 +262,7 @@ if selected_scanner == "🎯 10-Minute AI KNN Intraday":
                             is_fresh_candle_cross = (knnMA_.iloc[-1] > MAknn_.iloc[-1] and knnMA_.iloc[-3] <= MAknn_.iloc[-3])
                             
                             if is_fresh_candle_cross:
-                                st.toast(f"🔔 ALERT: {stock} માં ૧૦ મિનિટ પર બિલકુલ હમણાં ફ્રેશ ક્રોસઓવર થયો છે!", icon="🔥")
+                                st.toast(f"🔔 ALERT: {stock} માં ૧ો મિનિટ પર બિલકુલ હમણાં ફ્રેશ ક્રોસઓવર થયો છે!", icon="🔥")
                                 alert_triggered = True
                                 
                             results.append({
@@ -279,8 +293,9 @@ elif selected_scanner == "📈 4-Hour Live Touch Scanner":
         if st.button("🚀 4h Chart પર સ્ટોક્સ સ્કેન કરવાનું ચાલુ કરો"):
             results = []
             progress_bar = st.progress(0)
-            start_d = (now_india - timedelta(days=60)).strftime("%Y-%m-%d")
-            end_d = now_india.strftime("%Y-%m-%d")
+            
+            # 🎯 ANYTIME LIVE DATE RESOLUTION
+            start_d, end_d = get_anytime_trading_dates(lookback_days=60)
             
             for idx, stock in enumerate(WATCHLIST):
                 progress_bar.progress((idx + 1) / len(WATCHLIST))
@@ -321,8 +336,9 @@ elif selected_scanner == "📊 4H Zone + 15M Volumetric Cross":
         if st.button("🚀 Perfect 5-10 Stocks સ્કેન શરૂ કરો"):
             perfect_results = []
             progress_bar = st.progress(0)
-            start_d = (now_india - timedelta(days=60)).strftime("%Y-%m-%d")
-            end_d = now_india.strftime("%Y-%m-%d")
+            
+            # 🎯 ANYTIME LIVE DATE RESOLUTION
+            start_d, end_d = get_anytime_trading_dates(lookback_days=60)
             
             for idx, stock in enumerate(WATCHLIST):
                 progress_bar.progress((idx + 1) / len(WATCHLIST))
