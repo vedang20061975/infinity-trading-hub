@@ -80,7 +80,7 @@ WATCHLIST = [
     "AARTIIND", "ABFRL", "ABBOTINDIA", "ABCAPITAL", "ALKEM", "APLLTD", "APOLLOTYRE", "ASHOKLEY", 
     "ASTRAL", "ATUL", "AUROPHARMA", "BALRAMCHIN", "BANDHANBNK", "BATAINDIA", "BERGEPAINT", "BHARATFORG", 
     "CHAMBLFERT", "CHOLAMANDAL", "COROMANDEL", "CROMPTON", "DEEPAKNTR", "DELTACORP", "ESCORTS", "EXIDEIND", 
-    "FEDERALBNK", "GLENMARK", "GODREJPROP", "GRANULES", "GUJGASLTD", "HAL", "HINDCOPPER", "IBULHSGFIN", 
+    "FEDERALBNK", "GLenMARK", "GODREJPROP", "GRANULES", "GUJGASLTD", "HAL", "HINDCOPPER", "IBULHSGFIN", 
     "IDFCFIRSTB", "IEX", "IGL", "INDHOTEL", "INDIACEM", "INDIAMART", "IPCALAB", "JKCEMENT", 
     "JUBLFOOD", "L&TFH", "LALPATHLAB", "LUPIN", "M&MFIN", "MANAPPURAM", "METROPOLIS", "MFSL", 
     "MGL", "MPHASIS", "MRF", "NATIONALUM", "NAVINFLUOR", "NMDC", "OBEROIRLTY", "OFSS", 
@@ -96,19 +96,13 @@ def load_security_ids_master():
         s = requests.get(url).content
         master_df = pd.read_csv(io.StringIO(s.decode('utf-8')), low_memory=False)
         master_df = master_df[(master_df['SEM_EXM_EXCH_ID'] == 'NSE') & (master_df['SEM_INSTRUMENT_NAME'] == 'EQUITY')]
-        
-        mapping = {}
-        for _, row in master_df.iterrows():
-            sym = str(row['SEM_TRADING_SYMBOL']).replace("-EQ", "")
-            if sym in WATCHLIST:
-                mapping[sym] = str(row['SEM_SMST_SECURITY_ID'])
+        mapping = {str(row['SEM_TRADING_SYMBOL']).replace("-EQ", ""): str(row['SEM_SMST_SECURITY_ID']) for _, row in master_df.iterrows() if str(row['SEM_TRADING_SYMBOL']).replace("-EQ", "") in WATCHLIST}
         return mapping
-    except: 
-        return {}
+    except: return {}
 
 stock_map = load_security_ids_master()
 
-# 🎯 UNIVERSAL CLOUD SECURE FETCH ENGINE
+# 🎯 UNIVERSAL CLOUD SECURE FETCH ENGINE (ચોવીસેય કલાક લાઈવ ડેટા પ્રોટોકોલ)
 def get_intraday_data_safe(security_id, start_date, end_date):
     if dhan_client:
         try:
@@ -203,6 +197,7 @@ def calculate_pure_rsi(series, period=14):
 # CORE IMPLEMENTATION - ROUTING ENGINE
 # =====================================
 
+# 🎯 સેક્શન ૧: 10-MINUTE AI KNN
 if selected_scanner == "🎯 10-Minute AI KNN Intraday":
     st.subheader("🎯 10-Minute AI KNN Intraday Gold Scanner")
     st.write("છેલ્લા ટ્રેડિંગ સેશનમાં જનરેટ થયેલા શુદ્ધ બુલિશ મોમેન્ટમ સ્ટોક્સ (૨૪ કલાક એનીટાઇમ એક્ટિવ).")
@@ -272,6 +267,7 @@ if selected_scanner == "🎯 10-Minute AI KNN Intraday":
                 st.info("કોઈ બુલિશ ટ્રેન્ડિંગ સ્ટોક મળ્યો નથી.")
     elif user_key != "": st.error("❌ ખોટી સબસ્ક્રિપ્શન Key!")
 
+# 📈 સેક્શન ૨: 4-HOUR LIVE TOUCH SCANNER
 elif selected_scanner == "📈 4-Hour Live Touch Scanner":
     st.subheader("🎯 Smart Money Concepts (LuxAlgo) - 4-Hour Live Touch Scanner Pro")
     user_key = st.text_input("🔑 સબસ્ક્રિપ્શન Key દાખલ કરો:", type="password", key="key_4h")
@@ -314,6 +310,7 @@ elif selected_scanner == "📈 4-Hour Live Touch Scanner":
             else: st.warning("⚠️ કોઈ સ્ટોક 4h ઓર્ડર બ્લોક ઝોનમાં નથી.")
     elif user_key != "": st.error("❌ ખોટી સબસ્ક્રિપ્શન Key!")
 
+# 📊 સેક્શન ૩: 4H ZONE + 15M VOLUMETRIC CROSS
 elif selected_scanner == "📊 4H Zone + 15M Volumetric Cross":
     st.subheader("🎯 Infinity SMC 4H Zone + 15M Volumetric Cross")
     user_key = st.text_input("🔑 સબસ્ક્રિપ્શન Key દાખલ કરો:", type="password", key="key_strict")
