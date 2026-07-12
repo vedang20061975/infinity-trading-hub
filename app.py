@@ -4,6 +4,7 @@ import requests
 import io
 import numpy as np
 from datetime import datetime, timedelta
+import pytz  # 🎯 ઇન્ડિયન ટાઇમ ઝોન માટે
 
 # 🎯 SECURITY INSULATED IMPORTER
 try:
@@ -80,7 +81,7 @@ WATCHLIST = [
     "AARTIIND", "ABFRL", "ABBOTINDIA", "ABCAPITAL", "ALKEM", "APLLTD", "APOLLOTYRE", "ASHOKLEY", 
     "ASTRAL", "ATUL", "AUROPHARMA", "BALRAMCHIN", "BANDHANBNK", "BATAINDIA", "BERGEPAINT", "BHARATFORG", 
     "CHAMBLFERT", "CHOLAMANDAL", "COROMANDEL", "CROMPTON", "DEEPAKNTR", "DELTACORP", "ESCORTS", "EXIDEIND", 
-    "FEDERALBNK", "GLenMARK", "GODREJPROP", "GRANULES", "GUJGASLTD", "HAL", "HINDCOPPER", "IBULHSGFIN", 
+    "FEDERALBNK", "GLENMARK", "GODREJPROP", "GRANULES", "GUJGASLTD", "HAL", "HINDCOPPER", "IBULHSGFIN", 
     "IDFCFIRSTB", "IEX", "IGL", "INDHOTEL", "INDIACEM", "INDIAMART", "IPCALAB", "JKCEMENT", 
     "JUBLFOOD", "L&TFH", "LALPATHLAB", "LUPIN", "M&MFIN", "MANAPPURAM", "METROPOLIS", "MFSL", 
     "MGL", "MPHASIS", "MRF", "NATIONALUM", "NAVINFLUOR", "NMDC", "OBEROIRLTY", "OFSS", 
@@ -102,7 +103,7 @@ def load_security_ids_master():
 
 stock_map = load_security_ids_master()
 
-# 🎯 UNIVERSAL CLOUD SECURE FETCH ENGINE (ચોવીસેય કલાક લાઈવ ડેટા પ્રોટોકોલ)
+# 🎯 UNIVERSAL CLOUD SECURE FETCH ENGINE
 def get_intraday_data_safe(security_id, start_date, end_date):
     if dhan_client:
         try:
@@ -112,7 +113,6 @@ def get_intraday_data_safe(security_id, start_date, end_date):
         except:
             pass
             
-    # Cloud Bypass REST Architecture Fallback
     try:
         headers = {"access-token": ACCESS_TOKEN, "Content-Type": "application/json"}
         payload = {
@@ -197,7 +197,10 @@ def calculate_pure_rsi(series, period=14):
 # CORE IMPLEMENTATION - ROUTING ENGINE
 # =====================================
 
-# 🎯 સેક્શન ૧: 10-MINUTE AI KNN
+# 🎯 IST TIME BLOCK FOR SCRIPTS
+tz_india = pytz.timezone('Asia/Kolkata')
+now_india = datetime.now(tz_india)
+
 if selected_scanner == "🎯 10-Minute AI KNN Intraday":
     st.subheader("🎯 10-Minute AI KNN Intraday Gold Scanner")
     st.write("છેલ્લા ટ્રેડિંગ સેશનમાં જનરેટ થયેલા શુદ્ધ બુલિશ મોમેન્ટમ સ્ટોક્સ (૨૪ કલાક એનીટાઇમ એક્ટિવ).")
@@ -210,8 +213,9 @@ if selected_scanner == "🎯 10-Minute AI KNN Intraday":
             alert_triggered = False
             progress_bar = st.progress(0)
             
-            start_d = (datetime.now() - timedelta(days=35)).strftime("%Y-%m-%d")
-            end_d = datetime.now().strftime("%Y-%m-%d")
+            # 🎯 CLOUD ANYTIME TIME-DELTA RESOLUTION BLOCK
+            start_d = (now_india - timedelta(days=35)).strftime("%Y-%m-%d")
+            end_d = now_india.strftime("%Y-%m-%d")
             
             for idx, stock in enumerate(WATCHLIST):
                 progress_bar.progress((idx + 1) / len(WATCHLIST))
@@ -267,7 +271,6 @@ if selected_scanner == "🎯 10-Minute AI KNN Intraday":
                 st.info("કોઈ બુલિશ ટ્રેન્ડિંગ સ્ટોક મળ્યો નથી.")
     elif user_key != "": st.error("❌ ખોટી સબસ્ક્રિપ્શન Key!")
 
-# 📈 સેક્શન ૨: 4-HOUR LIVE TOUCH SCANNER
 elif selected_scanner == "📈 4-Hour Live Touch Scanner":
     st.subheader("🎯 Smart Money Concepts (LuxAlgo) - 4-Hour Live Touch Scanner Pro")
     user_key = st.text_input("🔑 સબસ્ક્રિપ્શન Key દાખલ કરો:", type="password", key="key_4h")
@@ -276,8 +279,8 @@ elif selected_scanner == "📈 4-Hour Live Touch Scanner":
         if st.button("🚀 4h Chart પર સ્ટોક્સ સ્કેન કરવાનું ચાલુ કરો"):
             results = []
             progress_bar = st.progress(0)
-            start_d = (datetime.now() - timedelta(days=60)).strftime("%Y-%m-%d")
-            end_d = datetime.now().strftime("%Y-%m-%d")
+            start_d = (now_india - timedelta(days=60)).strftime("%Y-%m-%d")
+            end_d = now_india.strftime("%Y-%m-%d")
             
             for idx, stock in enumerate(WATCHLIST):
                 progress_bar.progress((idx + 1) / len(WATCHLIST))
@@ -310,7 +313,6 @@ elif selected_scanner == "📈 4-Hour Live Touch Scanner":
             else: st.warning("⚠️ કોઈ સ્ટોક 4h ઓર્ડર બ્લોક ઝોનમાં નથી.")
     elif user_key != "": st.error("❌ ખોટી સબસ્ક્રિપ્શન Key!")
 
-# 📊 સેક્શન ૩: 4H ZONE + 15M VOLUMETRIC CROSS
 elif selected_scanner == "📊 4H Zone + 15M Volumetric Cross":
     st.subheader("🎯 Infinity SMC 4H Zone + 15M Volumetric Cross")
     user_key = st.text_input("🔑 સબસ્ક્રિપ્શન Key દાખલ કરો:", type="password", key="key_strict")
@@ -319,8 +321,8 @@ elif selected_scanner == "📊 4H Zone + 15M Volumetric Cross":
         if st.button("🚀 Perfect 5-10 Stocks સ્કેન શરૂ કરો"):
             perfect_results = []
             progress_bar = st.progress(0)
-            start_d = (datetime.now() - timedelta(days=60)).strftime("%Y-%m-%d")
-            end_d = datetime.now().strftime("%Y-%m-%d")
+            start_d = (now_india - timedelta(days=60)).strftime("%Y-%m-%d")
+            end_d = now_india.strftime("%Y-%m-%d")
             
             for idx, stock in enumerate(WATCHLIST):
                 progress_bar.progress((idx + 1) / len(WATCHLIST))
