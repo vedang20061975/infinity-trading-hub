@@ -108,7 +108,7 @@ def load_security_ids_master():
 
 stock_map = load_security_ids_master()
 
-# 🎯 UNIVERSAL CLOUD SECURE FETCH (લાયબ્રેરી બ્લોક થાય તો પણ ડેટા સીધો URL થી ખેંચશે)
+# 🎯 UNIVERSAL CLOUD SECURE FETCH ENGINE
 def get_intraday_data_safe(security_id, start_date, end_date):
     if dhan_client:
         try:
@@ -118,7 +118,7 @@ def get_intraday_data_safe(security_id, start_date, end_date):
         except:
             pass
             
-    # Cloud Bypass Rest Protocol
+    # Cloud Bypass REST Architecture Fallback
     try:
         headers = {"access-token": ACCESS_TOKEN, "Content-Type": "application/json"}
         payload = {
