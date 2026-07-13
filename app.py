@@ -15,7 +15,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # 🎯 તમારી GOOGLE WEB APP URL અહિયાં પેસ્ટ કરો:
-WEBHOOK_URL = "17nlPAO2wtzR-vGSI30df_MQXSUJligvSrtWbPxf3CMA"
+WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzLkp1sb8ZUAoHpXvqc6f85Bh70hwuP6RomyNRhFfyeSY2GL7OQvM9NSi6jxw6o3Tpoag/exec"
 
 PREMIUM_KEYS = {"10M_KNN": "SHARP_KNN_10M_2026"}
 
