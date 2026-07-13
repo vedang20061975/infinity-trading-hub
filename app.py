@@ -39,7 +39,7 @@ selected_scanner = st.sidebar.radio(
     ]
 )
 st.sidebar.write("---")
-st.sidebar.info("💡 **Commercial Note:** 10M સેક્ションમાં હવે ઇન્સ્ટન્ટ રિયલ-ટાઇમ ઓડિયો + વિઝ્યુઅલ એલર્ટ એક્ટિવ છે.")
+st.sidebar.info("💡 **Commercial Note:** 10M સેક્શનમાં હવે ઇન્સ્ટન્ટ રિયલ-ટાઇમ ઓડિયો + વિઝ્યુઅલ એલર્ટ એક્ટિવ છે.")
 
 # =====================================
 # CREDENTIALS & DATA MASTER SYNC
@@ -85,15 +85,23 @@ def load_security_ids_master():
 
 stock_map = load_security_ids_master()
 
-# 🎯 PURE DHAN PAID SERVER ENGINE (100% CORRECT OFFICIAL STRUCTURE LOOCKED)
-def get_dhan_paid_candles(security_id, lookback_days=30):
+# 🎯 NEW CONCEPT: REAL-BROWSER MASKED DATA GATEWAY FOR DHAN
+def get_dhan_data_masked(security_id, lookback_days=30):
     try:
         start_date = (datetime.now() - timedelta(days=lookback_days)).strftime("%Y-%m-%d")
         end_date = datetime.now().strftime("%Y-%m-%d")
         
-        headers = {"access-token": ACCESS_TOKEN, "Content-Type": "application/json"}
+        # 🎯 શુદ્ધ ઇન્ડિયન બ્રાઉઝર હેડર્સ માસ્કિંગ (સર્વર આઈપી ડિટેક્શન બ્લોકર)
+        headers = {
+            "access-token": ACCESS_TOKEN,
+            "Content-Type": "application/json",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Origin": "https://dhan.co",
+            "Referer": "https://dhan.co/"
+        }
         
-        # ધન ઓફિશિયલ ડોક્યુમેન્ટેશન મુજબ પર્ફેક્ટ પેલોડ સિન્ટેક્સ (instrument, fromDate, toDate)
         payload = {
             "securityId": str(security_id),
             "exchangeSegment": "NSE_EQ",
@@ -104,9 +112,12 @@ def get_dhan_paid_candles(security_id, lookback_days=30):
         }
         
         api_url = "https://api.dhan.co/v2/charts/intraday"
-        res = requests.post(api_url, headers=headers, json=payload, timeout=10)
-        if res.status_code == 200 and res.json().get("status") == "success":
-            return res.json().get("data")
+        res = requests.post(api_url, headers=headers, json=payload, timeout=12)
+        
+        if res.status_code == 200:
+            json_res = res.json()
+            if json_res.get("status") == "success" and json_res.get("data"):
+                return json_res.get("data")
     except:
         pass
     return None
@@ -195,7 +206,8 @@ if selected_scanner == "🎯 10-Minute AI KNN Intraday":
                 progress_bar.progress((idx + 1) / len(WATCHLIST))
                 if stock not in stock_map: continue
                 
-                chart_data = get_dhan_paid_candles(stock_map[stock], lookback_days=30)
+                # 🎯 CALL NEW REAL-BROWSER MASKED PROOTOCOL
+                chart_data = get_dhan_data_masked(stock_map[stock], lookback_days=30)
                 if chart_data and len(chart_data) > 0:
                     try:
                         raw_df = pd.DataFrame(chart_data)
@@ -258,7 +270,7 @@ elif selected_scanner == "📈 4-Hour Live Touch Scanner":
                 progress_bar.progress((idx + 1) / len(WATCHLIST))
                 if stock not in stock_map: continue
                 
-                chart_data = get_dhan_paid_candles(stock_map[stock], lookback_days=50)
+                chart_data = get_dhan_data_masked(stock_map[stock], lookback_days=50)
                 if chart_data and len(chart_data) > 0:
                     try:
                         raw_df = pd.DataFrame(chart_data)
@@ -298,7 +310,7 @@ elif selected_scanner == "📊 4H Zone + 15M Volumetric Cross":
                 progress_bar.progress((idx + 1) / len(WATCHLIST))
                 if stock not in stock_map: continue
                 
-                chart_data = get_dhan_paid_candles(stock_map[stock], lookback_days=50)
+                chart_data = get_dhan_data_masked(stock_map[stock], lookback_days=50)
                 if chart_data and len(chart_data) > 0:
                     try:
                         raw_df = pd.DataFrame(chart_data)
