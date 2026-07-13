@@ -2,6 +2,9 @@ import streamlit as st
 import pandas as pd
 import requests
 
+# =====================================
+# PAGE & THEME CONFIGURATION
+# =====================================
 st.set_page_config(page_title="Infinity AI Trading Hub", layout="wide")
 
 st.markdown("""
@@ -12,7 +15,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # 🎯 તમારી GOOGLE WEB APP URL અહિયાં પેસ્ટ કરો:
-WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzLkp1sb8ZUAoHpXvqc6f85Bh70hwuP6RomyNRhFfyeSY2GL7OQvM9NSi6jxw6o3Tpoag/exec"
+WEBHOOK_URL = "17nlPAO2wtzR-vGSI30df_MQXSUJligvSrtWbPxf3CMA"
 
 PREMIUM_KEYS = {"10M_KNN": "SHARP_KNN_10M_2026"}
 
@@ -29,15 +32,23 @@ if selected_scanner == "🎯 10-Minute AI KNN Intraday":
         if st.button("🔄 ડેશબોર્ડ ડેટા રિફ્રેશ કરો"):
             with st.spinner("Fetching data bridge blocks..."):
                 try:
-                    response = requests.get(WEBHOOK_URL, timeout=10)
+                    # ગૂગલ સ્ક્રિપ્ટમાંથી ડેટા રીડ કરવાનું પાકું લોજિક
+                    response = requests.get(WEBHOOK_URL, timeout=15)
                     if response.status_code == 200:
                         data = response.json()
                         if data and len(data) > 0:
                             df = pd.DataFrame(data)
-                            st.success(f"✅ ડેટા સિંક સક્સેસફુલ!")
+                            st.success(f"✅ ડેટા સિંક સક્સેસફુલ! છેલ્લો અપડેટ સમય: {df['Timestamp'].iloc[0]}")
                             st.table(df[["Stock", "Current_Price", "AI_KNN_Line", "Average_Line", "Status"]])
+                            
+                            # Fresh Crossover એલર્ટ ચેક
+                            if "🔥 Fresh Crossover" in df["Status"].values:
+                                st.toast("🔔 ALERT: માર્કેટમાં નવો ફ્રેશ ક્રોસઓવર ડિટેક્ટ થયો છે!", icon="🔥")
                         else:
                             st.info("📊 અત્યારે માર્કેટ કન્ડિશન મુજબ કોઈ સ્ટોક બુલિશ મોમેન્ટમમાં નથી.")
-                    else: st.error("❌ ગૂગલ બ્રિજ સાથે કનેક્ટ થઈ શકાયું નથી.")
+                    else:
+                        st.error("❌ ગૂગલ બ્રિજ સાથે કનેક્ટ થઈ શકાયું નથી.")
                 except Exception as e:
-                    st.info("📊 અત્યારે બ્રિજ ડેટાબેઝ મોડ એક્ટિવ નથી.")
+                    st.error(f"❌ ડેટા લોડિંગ એરર: {str(e)}")
+    elif user_key != "":
+        st.error("❌ ખોટી સબસ્ક્રિપ્શન Key!")
