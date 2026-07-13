@@ -5,12 +5,6 @@ import io
 import numpy as np
 from datetime import datetime, timedelta
 
-# 🎯 UNIQUE INSTANCE IMPORT TO BYPASS SERVER TYPEERRORS
-try:
-    import dhanhq as CustomDhanHQ
-except ImportError:
-    st.error("dhanhq library is missing. Please verify requirements.txt")
-
 # =====================================
 # PAGE & THEME CONFIGURATION
 # =====================================
@@ -50,24 +44,8 @@ st.sidebar.info("💡 **Commercial Note:** 10M સેક્શનમાં હ�
 # =====================================
 # CREDENTIALS & DATA MASTER SYNC
 # =====================================
-CLIENT_ID = "1108096138"
+# 🎯 તમારો નવો ટોકન અહીં ઇનપુટ કરેલો હોવો જોઈએ
 ACCESS_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJkaGFuIiwicGFydG5lcklkIjoiIiwiZXhwIjoxNzg0MDMzNzExLCJpYXQiOjE3ODM5NDczMTEsInRva2VuQ29uc3VtZXJUeXBlIjoiU0VMRiIsIndlYmhvb2tVcmwiOiIiLCJkaGFuQ2xpZW50SWQiOiIxMTA4MDk2MTM4In0.w1DEUgR62f4LXj2Uiha83DzuW57pLB7nV2tLw4CsGLD0xgySYE6w--Xu82U_92KEaXK6zR2dCP4asnN6cfRSsw"
-
-# 🎯 DEFINITIVE SERVERS PROTOCOL RESOLUTION
-dhan = None
-try:
-    if hasattr(CustomDhanHQ, 'dhanhq'):
-        dhan = getattr(CustomDhanHQ, 'dhanhq')(client_id=str(CLIENT_ID), access_token=str(ACCESS_TOKEN))
-    else:
-        dhan = CustomDhanHQ(client_id=str(CLIENT_ID), access_token=str(ACCESS_TOKEN))
-except Exception:
-    try:
-        if hasattr(CustomDhanHQ, 'dhanhq'):
-            dhan = getattr(CustomDhanHQ, 'dhanhq')(str(CLIENT_ID), str(ACCESS_TOKEN))
-        else:
-            dhan = CustomDhanHQ(str(CLIENT_ID), str(ACCESS_TOKEN))
-    except Exception:
-        dhan = None
 
 WATCHLIST = [
     "ABB", "ACC", "ADANIENT", "ADANIGREEN", "ADANIPORTS", "ADANIPOWER", "AMBUJACEM", "APOLLOHOSP", 
@@ -107,6 +85,32 @@ def load_security_ids_master():
     except: return {}
 
 stock_map = load_security_ids_master()
+
+# 🎯 PURE REST DIRECT CALL PROTOCOL (લાઇવલાઇબ્રેરી ડિપેન્ડન્સી બાયપાસ)
+def get_dhan_candles_direct(security_id, lookback_days=30):
+    try:
+        start_date = (datetime.now() - timedelta(days=lookback_days)).strftime("%Y-%m-%d")
+        end_date = datetime.now().strftime("%Y-%m-%d")
+        
+        headers = {"access-token": ACCESS_TOKEN, "Content-Type": "application/json"}
+        payload = {
+            "securityId": str(security_id),
+            "exchangeSegment": "NSE_EQ",
+            "instrument": "EQUITY",
+            "interval": "1",
+            "fromDate": str(start_date),
+            "toDate": str(end_date)
+        }
+        
+        api_url = "https://api.dhan.co/v2/charts/intraday"
+        res = requests.post(api_url, headers=headers, json=payload, timeout=12)
+        if res.status_code == 200:
+            json_res = res.json()
+            if json_res.get("status") == "success" and json_res.get("data"):
+                return json_res.get("data")
+    except:
+        pass
+    return None
 
 # =====================================
 # MATHEMATICAL MATH PACKS
@@ -178,30 +182,24 @@ def calculate_pure_rsi(series, period=14):
 
 if selected_scanner == "🎯 10-Minute AI KNN Intraday":
     st.subheader("🎯 10-Minute AI KNN Intraday Gold Scanner")
-    st.write("છેલ્લા ટ્રેડિંગ સેશનમાં જનરેટ થયેલા શુદ્ધ બુલિશ મોમેન્ટમ સ્ટોક્સ (૨૪ કલાક એનીટાઇમ એક્ટિવ).")
+    st.write("છેલ્લા ટ્રેડિંગ સેશનમાં જનરેટ થયેલા શુદ્ધ બુલિશ મોમેન્ટમ સ્ટોક્સ (૨ાઇ કલાક એનીટાઇમ એક્ટિવ).")
     
     user_key = st.text_input("🔑 સબસ્ક્રિપ્શન Key દાખલ કરો:", type="password", key="key_10m")
     if user_key == PREMIUM_KEYS["10M_KNN"]:
         st.success("🔓 પ્રીમિયમ સબસ્ક્રિપ્શન સક્રિય!")
         if st.button("🚀 10-Minute AI Gold Momentum સ્કેન કરો"):
-            if not dhan:
-                st.error("❌ ધન એપીઆઈ કનેક્શન ઇનિશિયલાઇઝ થયું નથી. કૃપા કરીને ક્રેડેન્શિયલ્સ તપાસો.")
-                st.stop()
-                
             results = []
             alert_triggered = False
             progress_bar = st.progress(0)
             
-            start_d = (datetime.now() - timedelta(days=35)).strftime("%Y-%m-%d")
-            end_d = datetime.now().strftime("%Y-%m-%d")
-            
             for idx, stock in enumerate(WATCHLIST):
                 progress_bar.progress((idx + 1) / len(WATCHLIST))
                 if stock not in stock_map: continue
-                try:
-                    res = dhan.intraday_minute_data(stock_map[stock], "NSE_EQ", "EQUITY", start_d, end_d)
-                    if res and res.get("status") == "success" and res.get("data"):
-                        raw_df = pd.DataFrame(res["data"])
+                
+                chart_data = get_dhan_candles_direct(stock_map[stock], lookback_days=30)
+                if chart_data and len(chart_data) > 0:
+                    try:
+                        raw_df = pd.DataFrame(chart_data)
                         raw_df["datetime"] = pd.to_datetime(raw_df["timestamp"], unit="s").dt.tz_localize("UTC").dt.tz_convert("Asia/Kolkata")
                         df_10m = raw_df.set_index("datetime").sort_index().between_time("09:15", "15:30").resample("10min").agg({"open": "first", "high": "max", "low": "min", "close": "last"}).dropna()
                         
@@ -236,7 +234,7 @@ if selected_scanner == "🎯 10-Minute AI KNN Intraday":
                                 "Cross Time": str(cross_at), 
                                 "Status": "🔥 Fresh Crossover" if is_fresh_candle_cross else "🎯 Active Bullish"
                             })
-                except: continue
+                    except: continue
                 
             if alert_triggered:
                 st.audio("https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg", format="audio/ogg", autoplay=True)
@@ -254,19 +252,17 @@ elif selected_scanner == "📈 4-Hour Live Touch Scanner":
     if user_key == PREMIUM_KEYS["4H_TOUCH"]:
         st.success("🔓 પ્રીમિયમ સબસ્ક્રિપ્શન સક્રિય!")
         if st.button("🚀 4h Chart પર સ્ટોક્સ સ્કેન કરવાનું ચાલુ કરો"):
-            if not dhan: st.stop()
             results = []
             progress_bar = st.progress(0)
-            start_d = (datetime.now() - timedelta(days=60)).strftime("%Y-%m-%d")
-            end_d = datetime.now().strftime("%Y-%m-%d")
             
             for idx, stock in enumerate(WATCHLIST):
                 progress_bar.progress((idx + 1) / len(WATCHLIST))
                 if stock not in stock_map: continue
-                try:
-                    res = dhan.intraday_minute_data(stock_map[stock], "NSE_EQ", "EQUITY", start_d, end_d)
-                    if res and res.get("status") == "success" and res.get("data"):
-                        raw_df = pd.DataFrame(res["data"])
+                
+                chart_data = get_dhan_candles_direct(stock_map[stock], lookback_days=60)
+                if chart_data and len(chart_data) > 0:
+                    try:
+                        raw_df = pd.DataFrame(chart_data)
                         raw_df["datetime"] = pd.to_datetime(raw_df["timestamp"], unit="s").dt.tz_localize("UTC").dt.tz_convert("Asia/Kolkata")
                         df_4h = raw_df.set_index("datetime").sort_index().between_time("09:15", "15:30").resample("4h", offset="15min").agg({"open": "first", "high": "max", "low": "min", "close": "last"}).dropna()
                         df_4h["time_str"] = df_4h.index.strftime("%Y-%m-%d %H:%M")
@@ -285,7 +281,7 @@ elif selected_scanner == "📈 4-Hour Live Touch Scanner":
                                     "Stock": stock, "Current Price": float(df_4h.iloc[-1]["close"]), "OB Status": "Fresh Zone Inside",
                                     "OB Low (Demand)": ob["OB Low"], "OB High (Demand)": ob["OB High"], "OB Date/Time": ob["Origin Time"]
                                 })
-                except: continue
+                    except: continue
             if results: st.table(pd.DataFrame(results).drop_duplicates(subset=["Stock"], keep="last"))
             else: st.warning("⚠️ કોઈ સ્ટોક 4h ઓર્ડર બ્લોક ઝોનમાં નથી.")
     elif user_key != "": st.error("❌ ખોટી સબસ્ક્રિપ્શન Key!")
@@ -296,19 +292,17 @@ elif selected_scanner == "📊 4H Zone + 15M Volumetric Cross":
     if user_key == PREMIUM_KEYS["4H_ZONE_15M"]:
         st.success("🔓 પ્રીમિયમ સબસ્ક્રિપ્શન સક્રિય!")
         if st.button("🚀 Perfect 5-10 Stocks સ્કેન શરૂ કરો"):
-            if not dhan: st.stop()
             perfect_results = []
             progress_bar = st.progress(0)
-            start_d = (datetime.now() - timedelta(days=60)).strftime("%Y-%m-%d")
-            end_d = datetime.now().strftime("%Y-%m-%d")
             
             for idx, stock in enumerate(WATCHLIST):
                 progress_bar.progress((idx + 1) / len(WATCHLIST))
                 if stock not in stock_map: continue
-                try:
-                    res = dhan.intraday_minute_data(stock_map[stock], "NSE_EQ", "EQUITY", start_d, end_d)
-                    if res and res.get("status") == "success" and res.get("data"):
-                        raw_df = pd.DataFrame(res["data"])
+                
+                chart_data = get_dhan_candles_direct(stock_map[stock], lookback_days=60)
+                if chart_data and len(chart_data) > 0:
+                    try:
+                        raw_df = pd.DataFrame(chart_data)
                         raw_df["datetime"] = pd.to_datetime(raw_df["timestamp"], unit="s").dt.tz_localize("UTC").dt.tz_convert("Asia/Kolkata")
                         raw_df = raw_df.set_index("datetime").sort_index().between_time("09:15", "15:30")
                         
@@ -337,7 +331,7 @@ elif selected_scanner == "📊 4H Zone + 15M Volumetric Cross":
                                     "Stock": stock, "Current Price": float(df_4h.iloc[-1]["close"]), "OB Status": "Sharp Volumetric Reversal",
                                     "4H OB Low": ob["OB Low"], "4H OB High": ob["OB High"], "15M RSI": round(df_15m['rsi'].iloc[-1],2), "Zone Time": ob["Origin Time"]
                                 })
-                except: continue
+                    except: continue
             if perfect_results: st.table(pd.DataFrame(perfect_results).drop_duplicates(subset=["Stock"], keep="last"))
             else: st.info("અત્યારે માર્કેટમાં કોઈ સ્ટોક રેડી નથી.")
     elif user_key != "": st.error("❌ ખોટી સબસ્ક્રિપ્શન Key!")
