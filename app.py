@@ -5,6 +5,12 @@ import io
 import numpy as np
 from datetime import datetime, timedelta
 
+# 🎯 UNIQUE INSTANCE IMPORT TO BYPASS SERVER TYPEERRORS
+try:
+    import dhanhq as CustomDhanHQ
+except ImportError:
+    st.error("dhanhq library is missing. Please verify requirements.txt")
+
 # =====================================
 # PAGE & THEME CONFIGURATION
 # =====================================
@@ -44,7 +50,24 @@ st.sidebar.info("💡 **Commercial Note:** 10M સેક્શનમાં હ�
 # =====================================
 # CREDENTIALS & DATA MASTER SYNC
 # =====================================
+CLIENT_ID = "1108096138"
 ACCESS_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJkaGFuIiwicGFydG5lcklkIjoiIiwiZXhwIjoxNzg0MDIzMjgyLCJpYXQiOjE3ODM5MzY4ODIsInRva2VuQ29uc3VtZXJUeXBlIjoiU0VMRiIsIndlYmhvb2tVcmwiOiIiLCJkaGFuQ2xpZW50SWQiOiIxMTA4MDk2MTM4In0.YyvaOmIY3podksVl6zsKIcauZ_MpNTp7qG2V1Rqu-At9PfwcWrZwKrmhZTwQb3LwiKEd4xEq8vnpdE_phs2DDA"
+
+# 🎯 DEFINITIVE SERVERS PROTOCOL RESOLUTION
+dhan = None
+try:
+    if hasattr(CustomDhanHQ, 'dhanhq'):
+        dhan = getattr(CustomDhanHQ, 'dhanhq')(client_id=str(CLIENT_ID), access_token=str(ACCESS_TOKEN))
+    else:
+        dhan = CustomDhanHQ(client_id=str(CLIENT_ID), access_token=str(ACCESS_TOKEN))
+except Exception:
+    try:
+        if hasattr(CustomDhanHQ, 'dhanhq'):
+            dhan = getattr(CustomDhanHQ, 'dhanhq')(str(CLIENT_ID), str(ACCESS_TOKEN))
+        else:
+            dhan = CustomDhanHQ(str(CLIENT_ID), str(ACCESS_TOKEN))
+    except Exception:
+        dhan = None
 
 WATCHLIST = [
     "ABB", "ACC", "ADANIENT", "ADANIGREEN", "ADANIPORTS", "ADANIPOWER", "AMBUJACEM", "APOLLOHOSP", 
@@ -63,7 +86,7 @@ WATCHLIST = [
     "AARTIIND", "ABFRL", "ABBOTINDIA", "ABCAPITAL", "ALKEM", "APLLTD", "APOLLOTYRE", "ASHOKLEY", 
     "ASTRAL", "ATUL", "AUROPHARMA", "BALRAMCHIN", "BANDHANBNK", "BATAINDIA", "BERGEPAINT", "BHARATFORG", 
     "CHAMBLFERT", "CHOLAMANDAL", "COROMANDEL", "CROMPTON", "DEEPAKNTR", "DELTACORP", "ESCORTS", "EXIDEIND", 
-    "FEDERALBNK", "GLenMARK", "GODREJPROP", "GRANULES", "GUJGASLTD", "HAL", "HINDCOPPER", "IBULHSGFIN", 
+    "FEDERALBNK", "GLENMARK", "GODREJPROP", "GRANULES", "GUJGASLTD", "HAL", "HINDCOPPER", "IBULHSGFIN", 
     "IDFCFIRSTB", "IEX", "IGL", "INDHOTEL", "INDIACEM", "INDIAMART", "IPCALAB", "JKCEMENT", 
     "JUBLFOOD", "L&TFH", "LALPATHLAB", "LUPIN", "M&MFIN", "MANAPPURAM", "METROPOLIS", "MFSL", 
     "MGL", "MPHASIS", "MRF", "NATIONALUM", "NAVINFLUOR", "NMDC", "OBEROIRLTY", "OFSS", 
@@ -84,43 +107,6 @@ def load_security_ids_master():
     except: return {}
 
 stock_map = load_security_ids_master()
-
-# 🎯 NEW CONCEPT: REAL-BROWSER MASKED DATA GATEWAY FOR DHAN
-def get_dhan_data_masked(security_id, lookback_days=30):
-    try:
-        start_date = (datetime.now() - timedelta(days=lookback_days)).strftime("%Y-%m-%d")
-        end_date = datetime.now().strftime("%Y-%m-%d")
-        
-        # 🎯 શુદ્ધ ઇન્ડિયન બ્રાઉઝર હેડર્સ માસ્કિંગ (સર્વર આઈપી ડિટેક્શન બ્લોકર)
-        headers = {
-            "access-token": ACCESS_TOKEN,
-            "Content-Type": "application/json",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Accept": "application/json, text/plain, */*",
-            "Accept-Language": "en-US,en;q=0.9",
-            "Origin": "https://dhan.co",
-            "Referer": "https://dhan.co/"
-        }
-        
-        payload = {
-            "securityId": str(security_id),
-            "exchangeSegment": "NSE_EQ",
-            "instrument": "EQUITY",
-            "interval": "1",
-            "fromDate": str(start_date),
-            "toDate": str(end_date)
-        }
-        
-        api_url = "https://api.dhan.co/v2/charts/intraday"
-        res = requests.post(api_url, headers=headers, json=payload, timeout=12)
-        
-        if res.status_code == 200:
-            json_res = res.json()
-            if json_res.get("status") == "success" and json_res.get("data"):
-                return json_res.get("data")
-    except:
-        pass
-    return None
 
 # =====================================
 # MATHEMATICAL MATH PACKS
@@ -198,19 +184,24 @@ if selected_scanner == "🎯 10-Minute AI KNN Intraday":
     if user_key == PREMIUM_KEYS["10M_KNN"]:
         st.success("🔓 પ્રીમિયમ સબસ્ક્રિપ્શન સક્રિય!")
         if st.button("🚀 10-Minute AI Gold Momentum સ્કેન કરો"):
+            if not dhan:
+                st.error("❌ ધન એપીઆઈ કનેક્શન ઇનિશિયલાઇઝ થયું નથી. કૃપા કરીને ક્રેડેન્શિયલ્સ તપાસો.")
+                st.stop()
+                
             results = []
             alert_triggered = False
             progress_bar = st.progress(0)
             
+            start_d = (datetime.now() - timedelta(days=35)).strftime("%Y-%m-%d")
+            end_d = datetime.now().strftime("%Y-%m-%d")
+            
             for idx, stock in enumerate(WATCHLIST):
                 progress_bar.progress((idx + 1) / len(WATCHLIST))
                 if stock not in stock_map: continue
-                
-                # 🎯 CALL NEW REAL-BROWSER MASKED PROOTOCOL
-                chart_data = get_dhan_data_masked(stock_map[stock], lookback_days=30)
-                if chart_data and len(chart_data) > 0:
-                    try:
-                        raw_df = pd.DataFrame(chart_data)
+                try:
+                    res = dhan.intraday_minute_data(stock_map[stock], "NSE_EQ", "EQUITY", start_d, end_d)
+                    if res and res.get("status") == "success" and res.get("data"):
+                        raw_df = pd.DataFrame(res["data"])
                         raw_df["datetime"] = pd.to_datetime(raw_df["timestamp"], unit="s").dt.tz_localize("UTC").dt.tz_convert("Asia/Kolkata")
                         df_10m = raw_df.set_index("datetime").sort_index().between_time("09:15", "15:30").resample("10min").agg({"open": "first", "high": "max", "low": "min", "close": "last"}).dropna()
                         
@@ -245,7 +236,7 @@ if selected_scanner == "🎯 10-Minute AI KNN Intraday":
                                 "Cross Time": str(cross_at), 
                                 "Status": "🔥 Fresh Crossover" if is_fresh_candle_cross else "🎯 Active Bullish"
                             })
-                    except: continue
+                except: continue
                 
             if alert_triggered:
                 st.audio("https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg", format="audio/ogg", autoplay=True)
@@ -263,17 +254,19 @@ elif selected_scanner == "📈 4-Hour Live Touch Scanner":
     if user_key == PREMIUM_KEYS["4H_TOUCH"]:
         st.success("🔓 પ્રીમિયમ સબસ્ક્રિપ્શન સક્રિય!")
         if st.button("🚀 4h Chart પર સ્ટોક્સ સ્કેન કરવાનું ચાલુ કરો"):
+            if not dhan: st.stop()
             results = []
             progress_bar = st.progress(0)
+            start_d = (datetime.now() - timedelta(days=60)).strftime("%Y-%m-%d")
+            end_d = datetime.now().strftime("%Y-%m-%d")
             
             for idx, stock in enumerate(WATCHLIST):
                 progress_bar.progress((idx + 1) / len(WATCHLIST))
                 if stock not in stock_map: continue
-                
-                chart_data = get_dhan_data_masked(stock_map[stock], lookback_days=50)
-                if chart_data and len(chart_data) > 0:
-                    try:
-                        raw_df = pd.DataFrame(chart_data)
+                try:
+                    res = dhan.intraday_minute_data(stock_map[stock], "NSE_EQ", "EQUITY", start_d, end_d)
+                    if res and res.get("status") == "success" and res.get("data"):
+                        raw_df = pd.DataFrame(res["data"])
                         raw_df["datetime"] = pd.to_datetime(raw_df["timestamp"], unit="s").dt.tz_localize("UTC").dt.tz_convert("Asia/Kolkata")
                         df_4h = raw_df.set_index("datetime").sort_index().between_time("09:15", "15:30").resample("4h", offset="15min").agg({"open": "first", "high": "max", "low": "min", "close": "last"}).dropna()
                         df_4h["time_str"] = df_4h.index.strftime("%Y-%m-%d %H:%M")
@@ -303,17 +296,19 @@ elif selected_scanner == "📊 4H Zone + 15M Volumetric Cross":
     if user_key == PREMIUM_KEYS["4H_ZONE_15M"]:
         st.success("🔓 પ્રીમિયમ સબસ્ક્રિપ્શન સક્રિય!")
         if st.button("🚀 Perfect 5-10 Stocks સ્કેન શરૂ કરો"):
+            if not dhan: st.stop()
             perfect_results = []
             progress_bar = st.progress(0)
+            start_d = (datetime.now() - timedelta(days=60)).strftime("%Y-%m-%d")
+            end_d = datetime.now().strftime("%Y-%m-%d")
             
             for idx, stock in enumerate(WATCHLIST):
                 progress_bar.progress((idx + 1) / len(WATCHLIST))
                 if stock not in stock_map: continue
-                
-                chart_data = get_dhan_data_masked(stock_map[stock], lookback_days=50)
-                if chart_data and len(chart_data) > 0:
-                    try:
-                        raw_df = pd.DataFrame(chart_data)
+                try:
+                    res = dhan.intraday_minute_data(stock_map[stock], "NSE_EQ", "EQUITY", start_d, end_d)
+                    if res and res.get("status") == "success" and res.get("data"):
+                        raw_df = pd.DataFrame(res["data"])
                         raw_df["datetime"] = pd.to_datetime(raw_df["timestamp"], unit="s").dt.tz_localize("UTC").dt.tz_convert("Asia/Kolkata")
                         raw_df = raw_df.set_index("datetime").sort_index().between_time("09:15", "15:30")
                         
