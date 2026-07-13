@@ -85,8 +85,8 @@ def load_security_ids_master():
 
 stock_map = load_security_ids_master()
 
-# 🎯 PURE DHAN PAID REST PROOTOCOL (પરફેક્ટલી ટ્યુન કરેલી ૩ દિવસની ડેટા વિન્ડો)
-def get_dhan_paid_candles(security_id, lookback_days=3):
+# 🎯 SECURITY INSULATED REST API ENTRANCE
+def get_dhan_paid_candles(security_id, lookback_days=30):
     try:
         start_date = (datetime.now() - timedelta(days=lookback_days)).strftime("%Y-%m-%d")
         end_date = datetime.now().strftime("%Y-%m-%d")
@@ -103,10 +103,8 @@ def get_dhan_paid_candles(security_id, lookback_days=3):
         
         api_url = "https://api.dhan.co/v2/charts/intraday"
         res = requests.post(api_url, headers=headers, json=payload, timeout=12)
-        if res.status_code == 200:
-            json_res = res.json()
-            if json_res.get("status") == "success" and json_res.get("data"):
-                return json_res.get("data")
+        if res.status_code == 200 and res.json().get("status") == "success":
+            return res.json().get("data")
     except:
         pass
     return None
@@ -121,7 +119,7 @@ def calculate_pure_wma(series, period):
     weights = np.arange(1, period + 1)
     return series.rolling(period).apply(lambda candles: np.dot(candles, weights) / weights.sum(), raw=True)
 
-def mean_of_k_closest(df, num_closest=3, window_size=15, ma_len=5):
+def mean_of_k_closest(df, num_closest=3, window_size=30, ma_len=5):
     hl2 = (df['high'] + df['low']) / 2
     value_in = hl2.rolling(window=ma_len).mean()
     target_in = calculate_pure_rma(df['close'], period=5)
@@ -145,7 +143,7 @@ def mean_of_k_closest(df, num_closest=3, window_size=15, ma_len=5):
         knn_ma_out.append(sum(values_slice[i] for i in sorted_indices) / num_closest)
     return pd.Series(knn_ma_out, index=df.index)
 
-def calculate_luxalgo_4h_obs(df, swing_period=2):
+def calculate_luxalgo_4h_obs(df, swing_period=5):
     df_len = len(df)
     if df_len < swing_period * 2: return []
     highs, lows, closes, times = df["high"].tolist(), df["low"].tolist(), df["close"].tolist(), df["time_str"].tolist()
@@ -195,17 +193,17 @@ if selected_scanner == "🎯 10-Minute AI KNN Intraday":
                 progress_bar.progress((idx + 1) / len(WATCHLIST))
                 if stock not in stock_map: continue
                 
-                chart_data = get_dhan_paid_candles(stock_map[stock], lookback_days=3)
+                chart_data = get_dhan_paid_candles(stock_map[stock], lookback_days=30)
                 if chart_data and len(chart_data) > 0:
                     try:
                         raw_df = pd.DataFrame(chart_data)
                         raw_df["datetime"] = pd.to_datetime(raw_df["timestamp"], unit="s").dt.tz_localize("UTC").dt.tz_convert("Asia/Kolkata")
                         df_10m = raw_df.set_index("datetime").sort_index().between_time("09:15", "15:30").resample("10min").agg({"open": "first", "high": "max", "low": "min", "close": "last"}).dropna()
                         
-                        if len(df_10m) < 20: continue
-                        knnMA = mean_of_k_closest(df_10m, 3, 15, 5)
+                        if len(df_10m) < 40: continue
+                        knnMA = mean_of_k_closest(df_10m, 3, 30, 5)
                         knnMA_ = calculate_pure_wma(knnMA, 5)
-                        MAknn_ = calculate_pure_rma(knnMA, 20)
+                        MAknn_ = calculate_pure_rma(knnMA, 50)
                         
                         if knnMA_.iloc[-1] > MAknn_.iloc[-1]:
                             cross_at = ""
@@ -258,7 +256,7 @@ elif selected_scanner == "📈 4-Hour Live Touch Scanner":
                 progress_bar.progress((idx + 1) / len(WATCHLIST))
                 if stock not in stock_map: continue
                 
-                chart_data = get_dhan_paid_candles(stock_map[stock], lookback_days=3)
+                chart_data = get_dhan_paid_candles(stock_map[stock], lookback_days=60)
                 if chart_data and len(chart_data) > 0:
                     try:
                         raw_df = pd.DataFrame(chart_data)
@@ -267,7 +265,7 @@ elif selected_scanner == "📈 4-Hour Live Touch Scanner":
                         df_4h["time_str"] = df_4h.index.strftime("%Y-%m-%d %H:%M")
                         
                         if df_4h.empty: continue
-                        obs = calculate_luxalgo_4h_obs(df_4h, swing_period=2)
+                        obs = calculate_luxalgo_4h_obs(df_4h, swing_period=5)
                         for ob in obs:
                             touched = False
                             for k in range(-1, -12, -1): 
@@ -298,7 +296,7 @@ elif selected_scanner == "📊 4H Zone + 15M Volumetric Cross":
                 progress_bar.progress((idx + 1) / len(WATCHLIST))
                 if stock not in stock_map: continue
                 
-                chart_data = get_dhan_paid_candles(stock_map[stock], lookback_days=3)
+                chart_data = get_dhan_paid_candles(stock_map[stock], lookback_days=60)
                 if chart_data and len(chart_data) > 0:
                     try:
                         raw_df = pd.DataFrame(chart_data)
@@ -309,21 +307,21 @@ elif selected_scanner == "📊 4H Zone + 15M Volumetric Cross":
                         df_4h["time_str"] = df_4h.index.strftime("%Y-%m-%d %H:%M")
                         df_15m = raw_df.resample("15min").agg({"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
                         
-                        if len(df_4h) < 2 or len(df_15m) < 10: continue
+                        if len(df_4h) < 15 or len(df_15m) < 60: continue
                         
-                        df_15m['sma20'] = df_15m['close'].rolling(min(20, len(df_15m))).mean()
-                        df_15m['sma50'] = df_15m['close'].rolling(min(50, len(df_15m))).mean()
+                        df_15m['sma20'] = df_15m['close'].rolling(20).mean()
+                        df_15m['sma50'] = df_15m['close'].rolling(50).mean()
                         df_15m['rsi'] = calculate_pure_rsi(df_15m['close'], 14)
                         
                         is_fresh_crossover = False
-                        for c_idx in range(-1, -min(15, len(df_15m)), -1):
+                        for c_idx in range(-1, -15, -1):
                             if df_15m['sma20'].iloc[c_idx] > df_15m['sma50'].iloc[c_idx]:
                                 is_fresh_crossover = True
                                 break
                         
                         if not is_fresh_crossover: continue
                         
-                        obs = calculate_luxalgo_4h_obs(df_4h, swing_period=2)
+                        obs = calculate_luxalgo_4h_obs(df_4h, swing_period=5)
                         for ob in obs:
                             if (df_4h["low"].iloc[-1] <= ob["OB High"]) and (df_4h["high"].iloc[-1] >= ob["OB Low"]):
                                 perfect_results.append({
