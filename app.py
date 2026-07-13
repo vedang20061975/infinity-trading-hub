@@ -39,12 +39,11 @@ selected_scanner = st.sidebar.radio(
     ]
 )
 st.sidebar.write("---")
-st.sidebar.info("💡 **Commercial Note:** 10M સેક્શનમાં હવે ઇન્સ્ટન્ટ રિયલ-ટાઇમ ઓડિયો + વિઝ્યુઅલ એલર્ટ એક્ટિવ છે.")
+st.sidebar.info("💡 **Commercial Note:** 10M સેક્ションમાં હવે ઇન્સ્ટન્ટ રિયલ-ટાઇમ ઓડિયો + વિઝ્યુઅલ એલર્ટ એક્ટિવ છે.")
 
 # =====================================
 # CREDENTIALS & DATA MASTER SYNC
 # =====================================
-CLIENT_ID = "1108096138"
 ACCESS_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJkaGFuIiwicGFydG5lcklkIjoiIiwiZXhwIjoxNzg0MDIzMjgyLCJpYXQiOjE3ODM5MzY4ODIsInRva2VuQ29uc3VtZXJUeXBlIjoiU0VMRiIsIndlYmhvb2tVcmwiOiIiLCJkaGFuQ2xpZW50SWQiOiIxMTA4MDk2MTM4In0.YyvaOmIY3podksVl6zsKIcauZ_MpNTp7qG2V1Rqu-At9PfwcWrZwKrmhZTwQb3LwiKEd4xEq8vnpdE_phs2DDA"
 
 WATCHLIST = [
@@ -66,7 +65,7 @@ WATCHLIST = [
     "CHAMBLFERT", "CHOLAMANDAL", "COROMANDEL", "CROMPTON", "DEEPAKNTR", "DELTACORP", "ESCORTS", "EXIDEIND", 
     "FEDERALBNK", "GLenMARK", "GODREJPROP", "GRANULES", "GUJGASLTD", "HAL", "HINDCOPPER", "IBULHSGFIN", 
     "IDFCFIRSTB", "IEX", "IGL", "INDHOTEL", "INDIACEM", "INDIAMART", "IPCALAB", "JKCEMENT", 
-    "JUBLFOOD", "L&TFH", "LALPATHLAB", "LupIN", "M&MFIN", "MANAPPURAM", "METROPOLIS", "MFSL", 
+    "JUBLFOOD", "L&TFH", "LALPATHLAB", "LUPIN", "M&MFIN", "MANAPPURAM", "METROPOLIS", "MFSL", 
     "MGL", "MPHASIS", "MRF", "NATIONALUM", "NAVINFLUOR", "NMDC", "OBEROIRLTY", "OFSS", 
     "PAGEIND", "PEL", "PERSISTENT", "PETRONET", "POLYCAB", "PVRINOX", "RAMCOCEM", "RBLBANK", 
     "SAIL", "SANOFI", "SONACOMS", "SUNTV", "SYNGENE", "TEAMLEASE", "TORNTPOWER", "UBL", 
@@ -86,18 +85,28 @@ def load_security_ids_master():
 
 stock_map = load_security_ids_master()
 
-# 🎯 UNIVERSAL CLOUD SECURE FETCH ENGINE (લોકલ હોસ્ટની જેમ જ ડાયરેક્ટ કેન્ડલ્સ ખેંચશે)
-def get_intraday_data_safe(security_id, start_date, end_date):
+# 🎯 PURE DHAN PAID SERVER ENGINE (100% CORRECT OFFICIAL STRUCTURE LOOCKED)
+def get_dhan_paid_candles(security_id, lookback_days=30):
     try:
+        start_date = (datetime.now() - timedelta(days=lookback_days)).strftime("%Y-%m-%d")
+        end_date = datetime.now().strftime("%Y-%m-%d")
+        
         headers = {"access-token": ACCESS_TOKEN, "Content-Type": "application/json"}
+        
+        # ધન ઓફિશિયલ ડોક્યુમેન્ટેશન મુજબ પર્ફેક્ટ પેલોડ સિન્ટેક્સ (instrument, fromDate, toDate)
         payload = {
-            "securityId": str(security_id), "exchangeSegment": "NSE_EQ",
-            "instrumentType": "EQUITY", "fromBlock": str(start_date), "toBlock": str(end_date)
+            "securityId": str(security_id),
+            "exchangeSegment": "NSE_EQ",
+            "instrument": "EQUITY",
+            "interval": "1",
+            "fromDate": str(start_date),
+            "toDate": str(end_date)
         }
+        
         api_url = "https://api.dhan.co/v2/charts/intraday"
-        response = requests.post(api_url, headers=headers, json=payload, timeout=10)
-        if response.status_code == 200 and response.json().get("status") == "success":
-            return response.json().get("data")
+        res = requests.post(api_url, headers=headers, json=payload, timeout=10)
+        if res.status_code == 200 and res.json().get("status") == "success":
+            return res.json().get("data")
     except:
         pass
     return None
@@ -182,15 +191,11 @@ if selected_scanner == "🎯 10-Minute AI KNN Intraday":
             alert_triggered = False
             progress_bar = st.progress(0)
             
-            # 🎯 PURE SLIDING TIME PROOTOCOL (છેલ્લા ૩૫ દિવસથી આજની સેકન્ડ સુધીનો કન્ફર્મ ઇન્ટ્રાડે ડેટા)
-            start_d = (datetime.now() - timedelta(days=35)).strftime("%Y-%m-%d")
-            end_d = datetime.now().strftime("%Y-%m-%d")
-            
             for idx, stock in enumerate(WATCHLIST):
                 progress_bar.progress((idx + 1) / len(WATCHLIST))
                 if stock not in stock_map: continue
                 
-                chart_data = get_intraday_data_safe(stock_map[stock], start_d, end_d)
+                chart_data = get_dhan_paid_candles(stock_map[stock], lookback_days=30)
                 if chart_data and len(chart_data) > 0:
                     try:
                         raw_df = pd.DataFrame(chart_data)
@@ -248,14 +253,12 @@ elif selected_scanner == "📈 4-Hour Live Touch Scanner":
         if st.button("🚀 4h Chart પર સ્ટોક્સ સ્કેન કરવાનું ચાલુ કરો"):
             results = []
             progress_bar = st.progress(0)
-            start_d = (datetime.now() - timedelta(days=60)).strftime("%Y-%m-%d")
-            end_d = datetime.now().strftime("%Y-%m-%d")
             
             for idx, stock in enumerate(WATCHLIST):
                 progress_bar.progress((idx + 1) / len(WATCHLIST))
                 if stock not in stock_map: continue
                 
-                chart_data = get_intraday_data_safe(stock_map[stock], start_d, end_d)
+                chart_data = get_dhan_paid_candles(stock_map[stock], lookback_days=50)
                 if chart_data and len(chart_data) > 0:
                     try:
                         raw_df = pd.DataFrame(chart_data)
@@ -290,14 +293,12 @@ elif selected_scanner == "📊 4H Zone + 15M Volumetric Cross":
         if st.button("🚀 Perfect 5-10 Stocks સ્કેન શરૂ કરો"):
             perfect_results = []
             progress_bar = st.progress(0)
-            start_d = (datetime.now() - timedelta(days=60)).strftime("%Y-%m-%d")
-            end_d = datetime.now().strftime("%Y-%m-%d")
             
             for idx, stock in enumerate(WATCHLIST):
                 progress_bar.progress((idx + 1) / len(WATCHLIST))
                 if stock not in stock_map: continue
                 
-                chart_data = get_intraday_data_safe(stock_map[stock], start_d, end_d)
+                chart_data = get_dhan_paid_candles(stock_map[stock], lookback_days=50)
                 if chart_data and len(chart_data) > 0:
                     try:
                         raw_df = pd.DataFrame(chart_data)
