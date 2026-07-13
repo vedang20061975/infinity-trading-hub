@@ -285,7 +285,7 @@ elif selected_scanner == "📈 4-Hour Live Touch Scanner":
                                     "Stock": stock, "Current Price": float(df_4h.iloc[-1]["close"]), "OB Status": "Fresh Zone Inside",
                                     "OB Low (Demand)": ob["OB Low"], "OB High (Demand)": ob["OB High"], "OB Date/Time": ob["Origin Time"]
                                 })
-                    except: continue
+                except: continue
             if results: st.table(pd.DataFrame(results).drop_duplicates(subset=["Stock"], keep="last"))
             else: st.warning("⚠️ કોઈ સ્ટોક 4h ઓર્ડર બ્લોક ઝોનમાં નથી.")
     elif user_key != "": st.error("❌ ખોટી સબસ્ક્રિપ્શન Key!")
@@ -337,7 +337,7 @@ elif selected_scanner == "📊 4H Zone + 15M Volumetric Cross":
                                     "Stock": stock, "Current Price": float(df_4h.iloc[-1]["close"]), "OB Status": "Sharp Volumetric Reversal",
                                     "4H OB Low": ob["OB Low"], "4H OB High": ob["OB High"], "15M RSI": round(df_15m['rsi'].iloc[-1],2), "Zone Time": ob["Origin Time"]
                                 })
-                    except: continue
+                except: continue
             if perfect_results: st.table(pd.DataFrame(perfect_results).drop_duplicates(subset=["Stock"], keep="last"))
             else: st.info("અત્યારે માર્કેટમાં કોઈ સ્ટોક રેડી નથી.")
     elif user_key != "": st.error("❌ ખોટી સબસ્ક્રિપ્શન Key!")
