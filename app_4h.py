@@ -15,7 +15,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # 🎯 તમારી નવી 4H GOOGLE WEB APP URL અહિયાં લોક કરો
-WEBHOOK_URL_4H = "https://script.google.com/macros/s/AKfycbzC6NweI03C3epyrFmc3K_l9uXzebv7OYW9vhx85z9u7w-1dmw6awVQjRp7j9pfg-X29A/exec  "
+WEBHOOK_URL_4H = "https://script.google.com/macros/s/AKfycbzC6NweI03C3epyrFmc3K_l9uXzebv7OYW9vhx85z9u7w-1dmw6awVQjRp7j9pfg-X29A/exec"
 
 PREMIUM_KEYS = {"4H_ACCESS": "SHARP_KNN_10M_2026"}
 
