@@ -14,7 +14,7 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# 🎯 તમારી નવી 4H GOOGLE WEB APP URL અહિયાં લોક કરો
+# 🎯 તમારી 4H GOOGLE WEB APP URL
 WEBHOOK_URL_4H = "https://script.google.com/macros/s/AKfycbzC6NweI03C3epyrFmc3K_l9uXzebv7OYW9vhx85z9u7w-1dmw6awVQjRp7j9pfg-X29A/exec"
 
 PREMIUM_KEYS = {"4H_ACCESS": "SHARP_KNN_10M_2026"}
@@ -34,39 +34,29 @@ if user_key == PREMIUM_KEYS["4H_ACCESS"]:
     if st.button("🔄 ડેશબોર્ડ ડેટા રિફ્રેશ કરો"):
         with st.spinner("Fetching 4H data bridge blocks..."):
             try:
-                # ૧. 4H Touch સ્કેનર રીડ લોજિક
                 if selected_scanner == "🍏 4-Hour Live Touch Scanner":
                     response = requests.get(f"{WEBHOOK_URL_4H}?scanner=4H_Touch", timeout=15)
                     if response.status_code == 200:
                         data = response.json()
-                        if data and len(data) > 0:
+                        if data:
                             df = pd.DataFrame(data)
-                            # કૉલમ નામ સુરક્ષા લોક (ઇન્ડેક્સ એરર બચાવવા)
                             df.columns = ["Stock", "Current Price", "Alert Level", "Status", "Timestamp"]
-                            st.success(f"✅ ડેટા સિંક સક્સેસફુલ! છેલ્લો અપડેટ સમય: {df['Timestamp'].iloc[0]}")
-                            st.table(df[["Stock", "Current Price", "Alert Level", "Status"]])
-                        else:
-                            st.info("📊 EMA 20 ઝોનમાં અત્યારે કોઈ સ્ટોક ઉપલબ્ધ નથી.")
-                    else:
-                        st.error("❌ ગૂગલ બ્રિજ સાથે કનેક્ટ થઈ શકાયું નથી.")
+                            st.success(f"✅ Master Watchlist loaded! Sync Time: {df['Timestamp'].iloc[0]}")
+                            st.dataframe(df[["Stock", "Current Price", "Alert Level", "Status"]], height=600)
+                        else: st.info("📊 ક્લાઉડ સ્ટોરેજમાં કોઈ ડેટા મળ્યો નથી.")
                 
-                # ૨. 4H Volumetric Cross રીડ લોજિક
                 elif selected_scanner == "🔥 4H Zone + 15M Volumetric Cross":
                     response = requests.get(f"{WEBHOOK_URL_4H}?scanner=4H_Volumetric", timeout=15)
                     if response.status_code == 200:
                         data = response.json()
-                        if data and len(data) > 0:
+                        if data:
                             df = pd.DataFrame(data)
-                            # કૉલમ નામ સુરક્ષા લોક
                             df.columns = ["Stock", "Current Price", "Alert Level", "Status", "Timestamp"]
-                            st.success(f"✅ ડેટા સિંક સક્સેસફુલ! છેલ્લો અપડેટ સમય: {df['Timestamp'].iloc[0]}")
-                            st.table(df[["Stock", "Current Price", "Alert Level", "Status"]])
-                        else:
-                            st.info("📊 કોઈ કન્ફર્મ હોટ વોલ્યુમ ક્રોસ મળ્યો નથી.")
-                    else:
-                        st.error("❌ ગૂગલ બ્રિજ સાથે કનેક્ટ થઈ શકાયું નથી.")
+                            st.success(f"✅ Master Watchlist loaded! Sync Time: {df['Timestamp'].iloc[0]}")
+                            st.dataframe(df[["Stock", "Current Price", "Alert Level", "Status"]], height=600)
+                        else: st.info("📊 ક્લાઉડ સ્ટોરેજમાં કોઈ ડેટા મળ્યો નથી.")
                         
             except Exception as e:
-                st.error(f"❌ 4H ડેટા લોડિંગ એરર: {str(e)}")
+                st.error(f"❌ ડેટા સિંક એરર: {str(e)}")
 elif user_key != "":
     st.error("❌ ખોટી સબસ્ક્રિપ્શન Key!")
