@@ -36,9 +36,12 @@ if selected_scanner == "🎯 10-Minute AI KNN Intraday":
                     if response.status_code == 200:
                         data = response.json()
                         if data and len(data) > 0:
-                            # 🎯 કૉલમ નેમ બિલકુલ શીટ જેવા શુદ્ધ કરી દીધા છે (અંડરસ્કોર વગર)
                             df = pd.DataFrame(data)
-                            st.success(f"✅ ડેટા સિંક સક્સેસફુલ!")
+                            
+                            # 🎯 કૉલમ ઇન્ડેક્સિંગ ફિક્સ (જેથી ઇન્ડેક્સ એરર ક્યારેય ન આવે)
+                            df.columns = ["Stock", "Current Price", "AI KNN Line", "Average Line", "Status", "Timestamp"]
+                            
+                            st.success(f"✅ ડેટા સિંક સક્સેસફુલ! છેલ્લો અપડેટ સમય: {df['Timestamp'].iloc[0]}")
                             st.table(df[["Stock", "Current Price", "AI KNN Line", "Average Line", "Status"]])
                             
                             # Fresh Crossover એલર્ટ ચેક
