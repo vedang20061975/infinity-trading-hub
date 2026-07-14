@@ -32,14 +32,14 @@ if selected_scanner == "🎯 10-Minute AI KNN Intraday":
         if st.button("🔄 ડેશબોર્ડ ડેટા રિફ્રેશ કરો"):
             with st.spinner("Fetching data bridge blocks..."):
                 try:
-                    # ગૂગલ સ્ક્રિપ્ટમાંથી ડેટા રીડ કરવાનું પાકું લોજિક
                     response = requests.get(WEBHOOK_URL, timeout=15)
                     if response.status_code == 200:
                         data = response.json()
                         if data and len(data) > 0:
+                            # 🎯 કૉલમ નેમ બિલકુલ શીટ જેવા શુદ્ધ કરી દીધા છે (અંડરસ્કોર વગર)
                             df = pd.DataFrame(data)
-                            st.success(f"✅ ડેટા સિંક સક્સેસફુલ! છેલ્લો અપડેટ સમય: {df['Timestamp'].iloc[0]}")
-                            st.table(df[["Stock", "Current_Price", "AI_KNN_Line", "Average_Line", "Status"]])
+                            st.success(f"✅ ડેટા સિંક સક્સેસફુલ!")
+                            st.table(df[["Stock", "Current Price", "AI KNN Line", "Average Line", "Status"]])
                             
                             # Fresh Crossover એલર્ટ ચેક
                             if "🔥 Fresh Crossover" in df["Status"].values:
