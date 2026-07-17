@@ -18,7 +18,7 @@ st.markdown("""
 # 🔑 સબસ્ક્રિપ્શન સિક્યોરિટી લોક
 SECURITY_KEY = "SHARP_KNN_10M_2026"
 
-# ⚠️ તમારી GOOGLE SHEET WEBHOOK LINK (જ્યાં PC રનર ડેટા પુશ કરે છે)
+# ⚠️ તમારી GOOGLE SHEET WEBHOOK LINK
 WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzLkp1sb8ZUAoHpXvqc6f85Bh70hwuP6RomyNRhFfyeSY2GL7OQvM9NSi6jxw6o3Tpoag/exec"
 
 # =====================================
@@ -37,7 +37,7 @@ if user_input_key == SECURITY_KEY:
                 if res.status_code == 200 and res.json():
                     df = pd.DataFrame(res.json())
                     
-                    # 🎯 ઓડિયો એલર્ટ: જો કોઈ પણ સ્ટોકનું સ્ટેટસ "🔥 Fresh Crossover" હોય, તો બ્રાઉઝરમાં સાઉન્ડ વાગશે
+                    # 🎯 ઓડિયો એલર્ટ લોજિક
                     if "Status" in df.columns and df["Status"].str.contains("Fresh").any():
                         st.markdown("""
                             <audio autoplay>
@@ -46,12 +46,22 @@ if user_input_key == SECURITY_KEY:
                         """, unsafe_allow_html=True)
                         st.warning("🔔 [WEB ALERT] ૫-મિનિટ ફ્રેમ પર ફ્રેશ બ્રેકઆઉટ સ્ટોક પકડાયો છે!")
 
-                    # 📊 ટેબલ કોલમ ગોઠવણી
-                    display_cols = ["Stock", "Current_Price", "Status", "Cross_Time", "AI_KNN_Line", "Average_Line"]
-                    available_cols = [c for c in display_cols if c in df.columns]
+                    # 🎯 સુધારો: જો કોલમના નામમાં નાની-મોટી ભૂલ હોય તો તેને ડાયનેમિકલી ચેક કરી લેશે
+                    possible_time_cols = ["Cross_Time", "cross_time", "Cross Time", "Time"]
+                    actual_time_col = None
+                    for col in possible_time_cols:
+                        if col in df.columns:
+                            actual_time_col = col
+                            break
+                    
+                    # જો ટાઈમ કોલમ મળી જાય, તો તેને લિસ્ટમાં ઉમેરો
+                    display_cols = ["Stock", "Current_Price", "Status"]
+                    if actual_time_col:
+                        display_cols.append(actual_time_col)
+                    display_cols.extend(["AI_KNN_Line", "Average_Line"])
                     
                     # લાઈવ ડેટા પ્રિન્ટ
-                    st.dataframe(df[available_cols], use_container_width=True)
+                    st.dataframe(df[display_cols], use_container_width=True)
                     
                     if 'Timestamp' in df.columns:
                         st.caption(f"📊 છેલ્લો લોકલ પીસી સિંક સમય: {df['Timestamp'].iloc[-1]}")
@@ -63,6 +73,5 @@ if user_input_key == SECURITY_KEY:
 elif user_input_key != "":
     st.error("❌ ખોટી કી! સાચી પ્રીમિયમ સબસ્ક્રિપ્શન કી એન્ટર કરો.")
 
-# ક્રેડિટ પટ્ટી
 st.markdown("---")
-st.caption("ℹ️ આ સ્કેનર પ્યોર ૫-મિનિટના ડેટા પર અસલી ક્રોસઓવર ટાઈમ ટ્રેક કરે છે. જૂનો કોડ સેફ રાખવા માટે આ સ્વતંત્ર પેનલ બનાવી છે.")
+st.caption("ℹ️ આ સ્કેનર પ્યોર ૫-મિનિટના ડેટા પર અસલી ક્રોસઓવર ટાઈમ ટ્રેક કરે છે.")
