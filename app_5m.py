@@ -16,7 +16,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # 🔑 સબસ્ક્રિપ્શન સિક્યોરિટી લોક
-SECURITY_KEY = "SHARP_KNN_10M_2026"
+SECURITY_KEY = "ved5"
 
 # ⚠️ તમારી GOOGLE SHEET WEBHOOK LINK
 WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzLkp1sb8ZUAoHpXvqc6f85Bh70hwuP6RomyNRhFfyeSY2GL7OQvM9NSi6jxw6o3Tpoag/exec"
