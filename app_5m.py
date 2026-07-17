@@ -17,6 +17,23 @@ st.markdown("""
 SECURITY_KEY = "SHARP_KNN_10M_2026"
 WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzLkp1sb8ZUAoHpXvqc6f85Bh70hwuP6RomyNRhFfyeSY2GL7OQvM9NSi6jxw6o3Tpoag/exec"
 
+# 🎯 ટાઈમને પ્યોર AM/PM માં કન્વર્ટ કરવાનું ફંક્શન
+def clean_to_ampm(time_str):
+    try:
+        time_str = str(time_str)
+        # જો ગૂગલ શીટનું 1899-12-30T09:23:50.000Z ફોર્મેટ હોય
+        if "T" in time_str:
+            time_part = time_str.split("T")[1].split(".")[0] # મળશે "09:23:50"
+            t = pd.to_datetime(time_part, format="%H:%M:%S")
+            return t.strftime("%I:%M %p") # આઉટપુટ: "09:23 AM"
+        # જો નોર્મલ ૨૪ કલાકનું ફોર્મેટ હોય (દા.ત. "15:25")
+        elif ":" in time_str:
+            t = pd.to_datetime(time_str.strip(), format="%H:%M")
+            return t.strftime("%I:%M %p")
+        return time_str
+    except:
+        return time_str
+
 # =====================================
 # 🔑 SECURITY LOGIN INTERFACE
 # =====================================
@@ -33,7 +50,6 @@ if user_input_key == SECURITY_KEY:
                     raw_data = res.json()
                     df = pd.DataFrame(raw_data)
                     
-                    # 🎯 ઓડિયો એલર્ટ લોજિક
                     if "Status" in df.columns and df["Status"].str.contains("Fresh").any():
                         st.markdown("""
                             <audio autoplay>
@@ -42,8 +58,7 @@ if user_input_key == SECURITY_KEY:
                         """, unsafe_allow_html=True)
                         st.warning("🔔 [WEB ALERT] ૫-મિનિટ ફ્રેમ પર ફ્રેશ બ્રેકઆઉટ સ્ટોક પકડાયો છે!")
 
-                    # 🎯 સુધારો: ડેટામાં ગમે તે નામથી ટાઈમ કોલમ આવી હોય (Timestamp, cross_time કે ગમે તે), 
-                    # તેને શોધીને સીધું જ "Cross_Time" તરીકે સુંદર નામ આપી દેશે.
+                    # ડાયનેમિકલી ટાઈમ કોલમ શોધવી
                     time_col_found = None
                     for col in df.columns:
                         if col.lower() in ["timestamp", "cross_time", "time", "sync_time"]:
@@ -51,19 +66,19 @@ if user_input_key == SECURITY_KEY:
                             break
                     
                     if time_col_found:
-                        df["Cross_Time"] = df[time_col_found]
+                        # 🎯 અહીં જાદુ થશે: આખી કોલમને પ્યોર AM/PM ટાઈમમાં કન્વર્ટ કરી દેશે
+                        df["Cross_Time"] = df[time_col_found].apply(clean_to_ampm)
                     else:
-                        df["Cross_Time"] = "15:25" # સેફ બેકઅપ
+                        df["Cross_Time"] = "09:15 AM"
 
-                    # 📊 ફાઇનલ ટેબલ કોલમ ડિસ્પ્લે લિસ્ટ
+                    # 📊 ફાઇનલ ટેબલ લેઆઉટ
                     final_cols = ["Stock", "Current_Price", "Status", "Cross_Time", "AI_KNN_Line", "Average_Line"]
                     available_cols = [c for c in final_cols if c in df.columns]
                     
-                    # સુંદર ટેબલ પ્રિન્ટ
                     st.dataframe(df[available_cols], use_container_width=True)
                     
                     if 'Sync_Time' in df.columns:
-                        st.caption(f"📊 છેલ્લો લોકલ પીસી સિંક સમય: {df['Sync_Time'].iloc[-1]}")
+                        st.caption(f"📊 છેલ્લો લોકલ પીસી સિંક સમય: {clean_to_ampm(df['Sync_Time'].iloc[-1])}")
                 else:
                     st.info("📊 પીસી રનર કનેક્ટેડ છે, પરંતુ અત્યારે કોઈ બુલિશ કેન્ડલ સેટઅપ નથી.")
             except Exception as e:
