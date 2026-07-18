@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import pandas as pd
+from datetime import datetime
 
 # =====================================
 # 🎯 PAGE CONFIGURATION & THEME
@@ -15,7 +16,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 SECURITY_KEY = "SHARP_KNN_10M_2026"
-# 🎯 ડાયનેમિક ફ્રેમ સપોર્ટ સાથેની લિંક
 WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzLkp1sb8ZUAoHpXvqc6f85Bh70hwuP6RomyNRhFfyeSY2GL7OQvM9NSi6jxw6o3Tpoag/exec?frame=5m"
 
 # =====================================
@@ -41,7 +41,7 @@ if user_input_key == SECURITY_KEY:
                         """, unsafe_allow_html=True)
                         st.warning("🔔 [WEB ALERT] ૫-મિનિટ ફ્રેમ પર ફ્રેશ બ્રેકઆઉટ સ્ટોક પકડાયો છે!")
 
-                    # 🎯 અલ્ટીમેટ કન્વર્ઝન સેફ્ટી ગાર્ડ: કોઈ પણ કોલમમાંથી ટાઈમ શોધી કાઢશે
+                    # 🎯 અલ્ટીમેટ કન્વર્ઝન સેફ્ટી ગાર્ડ
                     time_col = None
                     for c in ["Crossover_History", "Timestamp", "cross_time", "Sync_Time", "time"]:
                         if c in df.columns:
@@ -51,8 +51,6 @@ if user_input_key == SECURITY_KEY:
                     if time_col and df[time_col].dropna().astype(str).str.strip().str.len().gt(0).any():
                         df["Cross_Time"] = df[time_col]
                     else:
-                        # જો હજુ પણ ખાલી ડેટા આવતો હોય તો લાઈવ ટેસ્ટિંગ માટે કરન્ટ ટાઈમ બતાવશે
-                        from datetime import datetime
                         df["Cross_Time"] = "⏱️ " + datetime.now().strftime("%I:%M %p")
 
                     # 📊 ફાઇનલ ટેબલ લેઆઉટ
