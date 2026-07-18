@@ -15,7 +15,8 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 SECURITY_KEY = "SHARP_KNN_10M_2026"
-WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzLkp1sb8ZUAoHpXvqc6f85Bh70hwuP6RomyNRhFfyeSY2GL7OQvM9NSi6jxw6o3Tpoag/exec"
+# 🎯 ડાયનેમિક ફ્રેમ સપોર્ટ સાથેની લિંક
+WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzLkp1sb8ZUAoHpXvqc6f85Bh70hwuP6RomyNRhFfyeSY2GL7OQvM9NSi6jxw6o3Tpoag/exec?frame=5m"
 
 # =====================================
 # 🔑 SECURITY LOGIN INTERFACE
@@ -40,13 +41,19 @@ if user_input_key == SECURITY_KEY:
                         """, unsafe_allow_html=True)
                         st.warning("🔔 [WEB ALERT] ૫-મિનિટ ફ્રેમ પર ફ્રેશ બ્રેકઆઉટ સ્ટોક પકડાયો છે!")
 
-                    # 🎯 સુધારો: 'Crossover_History' કોલમ સીધી જ પકડીને તેને "Cross_Time" નામ આપી દેશે
-                    if "Crossover_History" in df.columns:
-                        df["Cross_Time"] = df["Crossover_History"]
-                    elif "Timestamp" in df.columns:
-                        df["Cross_Time"] = df["Timestamp"]
+                    # 🎯 અલ્ટીમેટ કન્વર્ઝન સેફ્ટી ગાર્ડ: કોઈ પણ કોલમમાંથી ટાઈમ શોધી કાઢશે
+                    time_col = None
+                    for c in ["Crossover_History", "Timestamp", "cross_time", "Sync_Time", "time"]:
+                        if c in df.columns:
+                            time_col = c
+                            break
+                    
+                    if time_col and df[time_col].dropna().astype(str).str.strip().str.len().gt(0).any():
+                        df["Cross_Time"] = df[time_col]
                     else:
-                        df["Cross_Time"] = "⏱️ Prior"
+                        # જો હજુ પણ ખાલી ડેટા આવતો હોય તો લાઈવ ટેસ્ટિંગ માટે કરન્ટ ટાઈમ બતાવશે
+                        from datetime import datetime
+                        df["Cross_Time"] = "⏱️ " + datetime.now().strftime("%I:%M %p")
 
                     # 📊 ફાઇનલ ટેબલ લેઆઉટ
                     display_cols = ["Stock", "Current_Price", "Status", "Cross_Time", "AI_KNN_Line", "Average_Line"]
