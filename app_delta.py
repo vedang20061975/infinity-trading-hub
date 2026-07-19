@@ -12,7 +12,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ⚠️ અહીં તમારી નવી સ્ક્રિપ્ટની URL લોક કરો
-BASE_URL = "https://script.google.com/macros/s/AKfycbyVQND0d04u8usPc4_V7nvasVgmIaLfvzRpEHONGv4Z2afgaz-HIhQY_nvAfekusioQ1g/exec"
+BASE_URL = "https://script.google.com/macros/s/AKfycbyVQND0d04u8usPc4_V7nvasVgmIaLfvzRpEHONGv4Z2afgaz-HIhQY_nvAfekusioQ1g/exec  "
 
 USER_KEYS = {
     "DELTA_MASTER_2026": "Bharat Sir (Master)",
