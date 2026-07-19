@@ -6,14 +6,13 @@ from datetime import datetime
 # =====================================================================
 # 🎯 CONFIGURATION LOCK & WEBHOOK LINK
 # =====================================================================
-# અહીં તમારી એ જ સાચી ગૂગલ સ્ક્રિપ્ટ લિંક પેસ્ટ કરેલી છે જે પીસી રનરમાં છે
 BASE_URL = "https://script.google.com/macros/s/AKfycbxVQND0d04u8usPc4_V7nvasVgmIaLfvzRPEHONGv4Z2afgaz-HIhQY_nvAfekusioQ1g/exec"
 MASTER_KEY = "BharatSir@Infinity"
 
 # Page Settings
 st.set_page_config(page_title="Infinity Delta Volume Hub", page_icon="📊", layout="wide")
 
-# Custom CSS for Dark Premium Theme
+# Custom CSS for Dark Premium Theme (Fixed Spelling Error Here)
 st.markdown("""
     <style>
     .reportview-container { background: #0e1117; }
@@ -22,7 +21,7 @@ st.markdown("""
     #MainMenu { visibility: hidden; }
     div.block-container { padding-top: 2rem; }
     </style>
-""", unsafe_allowed_html=True)
+""", unsafe_allow_html=True)
 
 st.title("⚡ Infinity Delta Volume Hub (24/7 Live)")
 
@@ -69,7 +68,6 @@ with tab1:
         
     df_1m = get_delta_data("1m")
     if not df_1m.empty:
-        # Filter columns for professional view
         df_show = df_1m[["Stock", "Current_Price", "SR_Delta_Vol", "Macro_Delta_Vol", "Discount_Zone", "Timestamp", "Status"]]
         st.dataframe(df_show, use_container_width=True, hide_index=True)
     else:
