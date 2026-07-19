@@ -12,17 +12,6 @@ MASTER_KEY = "BharatSir@Infinity"
 # Page Settings
 st.set_page_config(page_title="Infinity Delta Volume Hub", page_icon="📊", layout="wide")
 
-# Custom CSS for Dark Premium Theme (Fixed Spelling Error Here)
-st.markdown("""
-    <style>
-    .reportview-container { background: #0e1117; }
-    .stDeployButton { display:none; }
-    footer { visibility: hidden; }
-    #MainMenu { visibility: hidden; }
-    div.block-container { padding-top: 2rem; }
-    </style>
-""", unsafe_allow_html=True)
-
 st.title("⚡ Infinity Delta Volume Hub (24/7 Live)")
 
 # =====================================================================
