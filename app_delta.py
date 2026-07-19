@@ -1,57 +1,115 @@
 import streamlit as st
 import requests
 import pandas as pd
+from datetime import datetime
 
-st.set_page_config(page_title="Infinity Premium & Discount Delta Hub", layout="wide")
+# =====================================================================
+# 🎯 CONFIGURATION LOCK & WEBHOOK LINK
+# =====================================================================
+# અહીં તમારી એ જ સાચી ગૂગલ સ્ક્રિપ્ટ લિંક પેસ્ટ કરેલી છે જે પીસી રનરમાં છે
+BASE_URL = "https://script.google.com/macros/s/AKfycbxVQND0d04u8usPc4_V7nvasVgmIaLfvzRPEHONGv4Z2afgaz-HIhQY_nvAfekusioQ1g/exec"
+MASTER_KEY = "BharatSir@Infinity"
 
+# Page Settings
+st.set_page_config(page_title="Infinity Delta Volume Hub", page_icon="📊", layout="wide")
+
+# Custom CSS for Dark Premium Theme
 st.markdown("""
-    <div style='background-color:#0d1f2d; padding:20px; border-radius:10px; border-left: 8px solid #79c1f1; margin-bottom:20px;'>
-        <h1 style='margin:0; color:#79c1f1;'>💎 Infinity Premium & Discount Delta Volume Hub</h1>
-        <p style='margin:5px 0 0 0; color:#b2b2b2;'>Advanced Volume Delta Support Scalper • Bharat Sir</p>
-    </div>
-""", unsafe_allow_html=True)
+    <style>
+    .reportview-container { background: #0e1117; }
+    .stDeployButton { display:none; }
+    footer { visibility: hidden; }
+    #MainMenu { visibility: hidden; }
+    div.block-container { padding-top: 2rem; }
+    </style>
+""", unsafe_allowed_html=True)
 
-# ⚠️ અહીં તમારી નવી સ્ક્રિપ્ટની URL લોક કરો
-BASE_URL = "https://script.google.com/macros/s/AKfycbyVQND0d04u8usPc4_V7nvasVgmIaLfvzRpEHONGv4Z2afgaz-HIhQY_nvAfekusioQ1g/exec  "
+st.title("⚡ Infinity Delta Volume Hub (24/7 Live)")
 
-USER_KEYS = {
-    "DELTA_MASTER_2026": "Bharat Sir (Master)",
-    "DELTA_VIP_01": "Hiten Bhai",
-    "DELTA_VIP_02": "Rajesh Patel"
-}
+# =====================================================================
+# 🔐 SUBSCRIPTION & SECURITY GATE
+# =====================================================================
+if "authenticated" not in st.session_state:
+    st.session_state["authenticated"] = False
 
-user_input_key = st.text_input("🔑 Enter Delta Hub Subscription Key:", type="password")
+if not st.session_state["authenticated"]:
+    secret_input = st.text_input("🔑 Enter Delta Hub Subscription Key:", type="password")
+    if secret_input == MASTER_KEY:
+        st.session_state["authenticated"] = True
+        st.success("🔓 ડેલ્ટા વોલ્યુમ હબ સક્રિય! (Welcome, Bharat Sir (Master))")
+        st.rerun()
+    elif secret_input != "":
+        st.error("❌ Invalid Key! Please enter the correct master key.")
+    st.stop()
 
-if user_input_key in USER_KEYS:
-    client_name = USER_KEYS[user_input_key]
-    st.success(f"🔓 ડેલ્ટા વોલ્યુમ હબ સક્રિય! (Welcome, {client_name})")
-    
-    if "delta_logged" not in st.session_state:
-        try:
-            requests.get(f"{BASE_URL}?frame=login&client={client_name}", timeout=5)
-            st.session_state["delta_logged"] = True
-        except: pass
+# =====================================================================
+# 📊 DATA FETCHING ENGINE
+# =====================================================================
+def get_delta_data(frame_name):
+    try:
+        response = requests.get(f"{BASE_URL}?frame={frame_name}", timeout=15)
+        if response.status_code == 200:
+            json_data = response.json()
+            if isinstance(json_data, list) and len(json_data) > 0:
+                return pd.DataFrame(json_data)
+    except:
+        pass
+    return pd.DataFrame()
+
+# =====================================================================
+# 🎛️ MULTI-TIMEFRAME TABS CONFIGURATION
+# =====================================================================
+tab1, tab2, tab3, tab4 = st.tabs(["⚡ 1M Discount", "🎯 5M Discount", "📊 10M Confirm", "📈 30M Swing"])
+
+# --- TAB 1: 1M TIMEFRAME ---
+with tab1:
+    st.subheader("💎 1M Discount Range & Positive Delta Signals")
+    if st.button("🔄 1M રિફ્રેશ કરો", key="refresh_1m"):
+        st.rerun()
         
-    t1, t2, t3, t4 = st.tabs(["⚡ 1M Discount", "🎯 5M Discount", "📊 10M Confirm", "📈 30M Swing"])
-    
-    frames = {"1m": t1, "5m": t2, "10m": t3, "30m": t4}
-    
-    for f_name, tab_obj in frames.items():
-        with tab_obj:
-            st.subheader(f"💎 {f_name.upper()} Discount Range & Positive Delta Signals")
-            if st.button(f"🔄 {f_name.upper()} રિફ્રેશ કરો", key=f"btn_{f_name}"):
-                with st.spinner("ડેટા લોડ થઈ રહ્યો છે..."):
-                    try:
-                        res = requests.get(f"{BASE_URL}?frame={f_name}", timeout=15)
-                        if res.status_code == 200 and res.json():
-                            df = pd.DataFrame(res.json())
-                            display_cols = ["Stock", "Current_Price", "Status", "SR_Delta_Vol", "Macro_Delta_Vol", "Discount_Zone", "Timestamp"]
-                            available_cols = [c for c in display_cols if c in df.columns]
-                            st.dataframe(df[available_cols], use_container_width=True)
-                        else:
-                            st.info("📊 આ ટાઇમફ્રેમમાં કોઈ સ્ટોક અત્યારે ડિસ્કાઉન્ટ ઝોનમાં પોઝિટિવ ડેલ્ટા સાથે નથી.")
-                    except Exception as e:
-                        st.error(f"❌ સિંક એરર: {e}")
-                        
-elif user_input_key != "":
-    st.error("❌ ખોટી સિક્યોરિટી કી!")
+    df_1m = get_delta_data("1m")
+    if not df_1m.empty:
+        # Filter columns for professional view
+        df_show = df_1m[["Stock", "Current_Price", "SR_Delta_Vol", "Macro_Delta_Vol", "Discount_Zone", "Timestamp", "Status"]]
+        st.dataframe(df_show, use_container_width=True, hide_index=True)
+    else:
+        st.info("📊 આ ટાઇમફ્રેમમાં કોઈ સ્ટોક અત્યારે ડિસ્કાઉન્ટ ઝોનમાં પોઝિટિવ ડેલ્ટા સાથે નથી.")
+
+# --- TAB 2: 5M TIMEFRAME ---
+with tab2:
+    st.subheader("💎 5M Discount Range & Positive Delta Signals")
+    if st.button("🔄 5M રિફ્રેશ કરો", key="refresh_5m"):
+        st.rerun()
+        
+    df_5m = get_delta_data("5m")
+    if not df_5m.empty:
+        df_show = df_5m[["Stock", "Current_Price", "SR_Delta_Vol", "Macro_Delta_Vol", "Discount_Zone", "Timestamp", "Status"]]
+        st.dataframe(df_show, use_container_width=True, hide_index=True)
+    else:
+        st.info("📊 આ ટાઇમફ્રેમમાં કોઈ સ્ટોક અત્યારે ડિસ્કાઉન્ટ ઝોનમાં પોઝિટિવ ડેલ્ટા સાથે નથી.")
+
+# --- TAB 3: 10M TIMEFRAME ---
+with tab3:
+    st.subheader("💎 10M Discount Range & Positive Delta Signals")
+    if st.button("🔄 10M રિફ્રેશ કરો", key="refresh_10m"):
+        st.rerun()
+        
+    df_10m = get_delta_data("10m")
+    if not df_10m.empty:
+        df_show = df_10m[["Stock", "Current_Price", "SR_Delta_Vol", "Macro_Delta_Vol", "Discount_Zone", "Timestamp", "Status"]]
+        st.dataframe(df_show, use_container_width=True, hide_index=True)
+    else:
+        st.info("📊 આ ટાઇમફ્રેમમાં કોઈ સ્ટોક અત્યારે ડિસ્કાઉન્ટ ઝોનમાં પોઝિટિવ ડેલ્ટા સાથે નથી.")
+
+# --- TAB 4: 30M TIMEFRAME ---
+with tab4:
+    st.subheader("💎 30M Discount Range & Positive Delta Signals")
+    if st.button("🔄 30M રિફ્રેશ કરો", key="refresh_30m"):
+        st.rerun()
+        
+    df_30m = get_delta_data("30m")
+    if not df_30m.empty:
+        df_show = df_30m[["Stock", "Current_Price", "SR_Delta_Vol", "Macro_Delta_Vol", "Discount_Zone", "Timestamp", "Status"]]
+        st.dataframe(df_show, use_container_width=True, hide_index=True)
+    else:
+        st.info("📊 આ ટાઇમફ્રેમમાં કોઈ સ્ટોક અત્યારે ડિસ્કાઉન્ટ ઝોનમાં પોઝિટિવ ડેલ્ટા સાથે નથી.")
