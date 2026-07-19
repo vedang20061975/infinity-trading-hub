@@ -14,17 +14,41 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-SECURITY_KEY = "SHARP_KNN_10M_2026"
 BASE_URL = "https://script.google.com/macros/s/AKfycbzuL8iv5fbt2oMapI_qTYDKDEuqTvCnAUznmgv0RakGpuV8B29K7itN8qRF4vpyUxD2mw/exec"
 
 # =====================================
-# 🔑 SECURITY LOGIN INTERFACE
+# 🔑 MULTI-USER SECURITY KEYS
 # =====================================
+# અહીં તમારા ૧૦ ક્લાયન્ટ્સના નામ અને કી લોક કરી દીધી છે.
+# તમે ગમે ત્યારે ગિટહબ પરથી જ આ નામ કે કી બદલી શકો છો.
+USER_KEYS = {
+    "SHARP_KNN_10M_2026": "Bharat Sir (Master)",
+    "INF_CLIENT_01": "Amit Shah",
+    "INF_CLIENT_02": "Rajesh Patel",
+    "INF_CLIENT_03": "Vijay Sharma",
+    "INF_CLIENT_04": "Sanjay Mehta",
+    "INF_CLIENT_05": "Jignesh Joshi",
+    "INF_CLIENT_06": "Nitin Prajapati",
+    "INF_CLIENT_07": "Kamlesh Vaghela",
+    "INF_CLIENT_08": "Deepak Rathod",
+    "INF_CLIENT_09": "Tushar Trivedi",
+    "INF_CLIENT_10": "Ramesh Desai"
+}
+
 user_input_key = st.text_input("🔑 પ્રીમિયમ સબસ્ક્રિપ્શન Key દાખલ કરો:", type="password")
 
-if user_input_key == SECURITY_KEY:
-    st.success("🔓 ઇન્ફિનિટી ઓલ-ઇન-વન કોમ્બો ડેશબોર્ડ એક્ટિવ!")
+if user_input_key in USER_KEYS:
+    client_name = USER_KEYS[user_input_key]
+    st.success(f"🔓 ઇન્ફિનિટી ઓલ-ઇન-વન કોમ્બો ડેશબોર્ડ એક્ટિવ! (Welcome, {client_name})")
     
+    # 🎯 ગૂગલ સ્ક્રિપ્ટ પર સાયલન્ટલી ક્લાયન્ટનું નામ મોકલશે (ફક્ત પહેલીવાર લોગીન થાય ત્યારે)
+    if "logged_in_user" not in st.session_state:
+        try:
+            requests.get(f"{BASE_URL}?frame=login&client={client_name}", timeout=5)
+            st.session_state["logged_in_user"] = client_name
+        except:
+            pass
+            
     tab1, tab2, tab3, tab4 = st.tabs(["⚡ 1-Minute Scalper", "🎯 5-Minute Scalper", "📊 10-Minute Trend", "📈 30-Minute Swing"])
     
     # --- TAB 1: 1-MINUTE ---
@@ -37,7 +61,6 @@ if user_input_key == SECURITY_KEY:
                     if res.status_code == 200 and res.json():
                         df = pd.DataFrame(res.json())
                         
-                        # 🎯 ડાયનેમિક ટાઈમ સેફ્ટી ગાર્ડ
                         for c in ["Crossover_History", "Timestamp", "cross_time", "Cross_Time"]:
                             if c in df.columns:
                                 df["Cross_Time"] = df[c]
