@@ -36,9 +36,22 @@ if user_input_key == SECURITY_KEY:
                     res = requests.get(f"{BASE_URL}?frame=1m", timeout=15)
                     if res.status_code == 200 and res.json():
                         df = pd.DataFrame(res.json())
-                        st.dataframe(df, use_container_width=True)
-                    else: st.info("📊 1M રનર કનેક્ટેડ છે, બુલિશ સેટઅપની રાહ જોવાઈ રહી છે.")
-                except Exception as e: st.error(f"❌ એરર: {e}")
+                        
+                        # 🎯 ડાયનેમિક ટાઈમ સેફ્ટી ગાર્ડ
+                        for c in ["Crossover_History", "Timestamp", "cross_time", "Cross_Time"]:
+                            if c in df.columns:
+                                df["Cross_Time"] = df[c]
+                                break
+                                
+                        display_cols = ["Stock", "Current_Price", "Status", "Cross_Time", "AI_KNN_Line", "Average_Line"]
+                        available_cols = [c for c in display_cols if c in df.columns]
+                        st.dataframe(df[available_cols], use_container_width=True)
+                        if 'Clean_Sync' in df.columns:
+                            st.caption(f"📊 છેલ્લો લોકલ પીસી 1M સિંક: {df['Clean_Sync'].iloc[-1]}")
+                    else:
+                        st.info("📊 1M રનર કનેક્ટેડ છે, બુલિશ સેટઅપની રાહ જોવાઈ રહી છે.")
+                except Exception as e:
+                    st.error(f"❌ ડેટા સિંક એરર: {e}")
                 
     # --- TAB 2: 5-MINUTE ---
     with tab2:
@@ -50,7 +63,6 @@ if user_input_key == SECURITY_KEY:
                     if res.status_code == 200 and res.json():
                         df = pd.DataFrame(res.json())
                         
-                        # 🎯 ટાઈમ કોલમ ડાયનેમિક ચેક
                         for c in ["Crossover_History", "Timestamp", "cross_time", "Cross_Time"]:
                             if c in df.columns:
                                 df["Cross_Time"] = df[c]
@@ -61,8 +73,10 @@ if user_input_key == SECURITY_KEY:
                         st.dataframe(df[available_cols], use_container_width=True)
                         if 'Clean_Sync' in df.columns:
                             st.caption(f"📊 છેલ્લો લોકલ પીસી 5M સિંક: {df['Clean_Sync'].iloc[-1]}")
-                    else: st.info("📊 5M રનર કનેક્ટેડ છે, બુલિશ સેટઅપની રાહ જોવાઈ રહી છે.")
-                except Exception as e: st.error(f"❌ એરર: {e}")
+                    else:
+                        st.info("📊 5M રનર કનેક્ટેડ છે, બુલિશ સેટઅપની રાહ જોવાઈ રહી છે.")
+                except Exception as e:
+                    st.error(f"❌ ડેટા સિંક એરર: {e}")
                 
     # --- TAB 3: 10-MINUTE ---
     with tab3:
@@ -73,9 +87,19 @@ if user_input_key == SECURITY_KEY:
                     res = requests.get(f"{BASE_URL}?frame=10m", timeout=15)
                     if res.status_code == 200 and res.json():
                         df = pd.DataFrame(res.json())
-                        st.dataframe(df, use_container_width=True)
-                    else: st.info("📊 10M રનર કનેક્ટેડ છે, બુલિશ સેટઅપની રાહ જોવાઈ રહી છે.")
-                except Exception as e: st.error(f"❌ એરર: {e}")
+                        
+                        for c in ["Crossover_History", "Timestamp", "cross_time", "Cross_Time"]:
+                            if c in df.columns:
+                                df["Cross_Time"] = df[c]
+                                break
+                                
+                        display_cols = ["Stock", "Current_Price", "Status", "Cross_Time", "AI_KNN_Line", "Average_Line"]
+                        available_cols = [c for c in display_cols if c in df.columns]
+                        st.dataframe(df[available_cols], use_container_width=True)
+                    else:
+                        st.info("📊 10M રનર કનેક્ટેડ છે, બુલિશ સેટઅપની રાહ જોવાઈ રહી છે.")
+                except Exception as e:
+                    st.error(f"❌ ડેટા સિંક એરર: {e}")
 
     # --- TAB 4: 30-MINUTE ---
     with tab4:
@@ -86,9 +110,19 @@ if user_input_key == SECURITY_KEY:
                     res = requests.get(f"{BASE_URL}?frame=30m", timeout=15)
                     if res.status_code == 200 and res.json():
                         df = pd.DataFrame(res.json())
-                        st.dataframe(df, use_container_width=True)
-                    else: st.info("📊 30M રનર કનેક્ટેડ છે, બુલિશ સેટઅપની રાહ જોવાઈ રહી છે.")
-                except Exception as e: st.error(f"❌ એરર: {e}")
+                        
+                        for c in ["Crossover_History", "Timestamp", "cross_time", "Cross_Time"]:
+                            if c in df.columns:
+                                df["Cross_Time"] = df[c]
+                                break
+                                
+                        display_cols = ["Stock", "Current_Price", "Status", "Cross_Time", "AI_KNN_Line", "Average_Line"]
+                        available_cols = [c for c in display_cols if c in df.columns]
+                        st.dataframe(df[available_cols], use_container_width=True)
+                    else:
+                        st.info("📊 30M રનર કનેક્ટેડ છે, બુલિશ સેટઅપની રાહ જોવાઈ રહી છે.")
+                except Exception as e:
+                    st.error(f"❌ ડેટા સિંક એરર: {e}")
 
 elif user_input_key != "":
     st.error("❌ ખોટી કી!")
