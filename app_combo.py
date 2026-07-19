@@ -23,7 +23,7 @@ BASE_URL = "https://script.google.com/macros/s/AKfycbzuL8iv5fbt2oMapI_qTYDKDEuqT
 # તમે ગમે ત્યારે ગિટહબ પરથી જ આ નામ કે કી બદલી શકો છો.
 USER_KEYS = {
     "SHARP_KNN_10M_2026": "Bharat Sir (Master)",
-    "INF_CLIENT_01": "Amit Shah",
+    "INF_CLIENT_01": "hiten modi",
     "INF_CLIENT_02": "Rajesh Patel",
     "INF_CLIENT_03": "Vijay Sharma",
     "INF_CLIENT_04": "Sanjay Mehta",
