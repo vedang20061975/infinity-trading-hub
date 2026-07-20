@@ -3,9 +3,9 @@ import requests
 import pandas as pd
 
 # =====================================================================
-# 🎯 CONFIGURATION LOCK (પીસી રનર વાળી સેમ સાચી લિંક અહીં લોક કરી)
+# 🎯 CONFIGURATION LOCK (તમારી નવી ફાઇનલ ગુગલ સ્ક્રિપ્ટ વેબહૂક લિંક)
 # =====================================================================
-BASE_URL = "https://script.google.com/macros/s/AKfycbyf1o0VffwHNU6NELeyXNibpZ6ax-09-CHPfh6Ru_nV2YDE5VnZipcU3er9by5S9uoxMw/exec"
+BASE_URL = "https://script.google.com/macros/s/AKfycbziSh-LP_TRewLs_P8E_eSpSrMuxkLan1Xp7ej3egWQzuVhFAH83Nvk2-vgpEHW9pLsBQ/exec"
 MASTER_KEY = "BharatSir@Infinity"
 
 # Page Settings
@@ -34,14 +34,14 @@ if not st.session_state["authenticated"]:
 # =====================================================================
 def get_sheet_data(frame_name):
     try:
-        # ગૂગલ સ્ક્રિપ્ટ માંથી સીધો લાઈવ ડેટા ખેંચશે
+        # ગૂગલ સ્ક્રિપ્ટમાંથી ડેટા ફ્રેમ પેરામીટર સાથે ખેંચશે
         response = requests.get(f"{BASE_URL}?frame={frame_name}", timeout=15)
         if response.status_code == 200:
             json_data = response.json()
             if isinstance(json_data, list) and len(json_data) > 0:
                 df = pd.DataFrame(json_data)
-                # ફિલ્ટર: જે તે ટાઈમફ્રેમનો ડેટા મેચ કરવો (દા.ત. Status માં '1m' કે '5m' લખેલું હોય)
-                # જો ગૂગલ શીટમાં બધી જ રો મિક્સ હોય, તો અહીં ફ્રેમ વાઇઝ ફિલ્ટર કરી શકાય:
+                
+                # 🎯 સ્ટેટસ કોલમના આધારે જે તે ફ્રેમ (1m, 5m, 10m, 30m) નો જ ડેટા ટેબલમાં ફિલ્ટર થશે
                 df_filtered = df[df['Status'].str.contains(frame_name, case=False, na=False)]
                 return df_filtered
     except:
@@ -61,7 +61,7 @@ def display_frame_tab(tab_object, frame_label, frame_key):
             
         df_data = get_sheet_data(frame_key)
         if not df_data.empty:
-            # કોલમ્સ ચેક કરીને વ્યવસ્થિત ગોઠવવી
+            # શીટની કોલમ્સના પર્ફેક્ટ નામ સાથે મેચિંગ
             expected_cols = ["Stock", "Current Price", "AI KNN Line", "Average Line", "Status", "Timestamp"]
             available_cols = [c for c in expected_cols if c in df_data.columns]
             st.dataframe(df_data[available_cols], use_container_width=True, hide_index=True)
