@@ -5,8 +5,8 @@ import pandas as pd
 # =====================================================================
 # 🎯 CONFIGURATION LOCK (તમારી નવી ફાઇનલ ગુગલ સ્ક્રિપ્ટ વેબહૂક લિંક)
 # =====================================================================
-BASE_URL = "https://script.google.com/macros/s/AKfycbwCX61eQsn1_jckPUASEvJ7853BORVeeyBS_HF22XrZj3ZElYvARO4veQJ-cXJqbyiyaA/exec"
-MASTER_KEY = "BharatSir@Infinity"
+BASE_URL = "https://script.google.com/macros/s/AKfycbzaZQe9sKBWqW0MH_bx42MECBAlvCBz0MjKz_4pbNgB5Rq_kgjzLww9HAlYzo-jVUgW2w/exec"
+MASTER_KEY = "bcp"
 
 # Page Settings
 st.set_page_config(page_title="Infinity Master Combo Hub", page_icon="⚡", layout="wide")
