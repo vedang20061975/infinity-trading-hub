@@ -5,7 +5,7 @@ import pandas as pd
 # =====================================================================
 # 🎯 CONFIGURATION LOCK (તમારી નવી ફાઇનલ ગુગલ સ્ક્રિપ્ટ વેબહૂક લિંક)
 # =====================================================================
-BASE_URL = "https://script.google.com/macros/s/AKfycbwFMoyWgptzxBB3eSZEZUoc_s5Zsrkg7mJB_1wzshKasHkJgejQxMYL35PignszDBHpkA/exec"
+BASE_URL = "https://script.google.com/macros/s/AKfycbwCX61eQsn1_jckPUASEvJ7853BORVeeyBS_HF22XrZj3ZElYvARO4veQJ-cXJqbyiyaA/exec"
 MASTER_KEY = "BharatSir@Infinity"
 
 # Page Settings
