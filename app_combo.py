@@ -3,10 +3,14 @@ import requests
 import pandas as pd
 
 # =====================================================================
-# 🎯 CONFIGURATION LOCK (તમારી નવી ફાઇનલ ગુગલ સ્ક્રિપ્ટ વેબહૂક લિંક)
+# 🎯 2 SEPARATE WEBHOOK URLS (સિગ્નલ્સ અને ઓથેન્ટિકેશન માટે સાવ અલગ)
 # =====================================================================
-BASE_URL = "https://script.google.com/macros/s/AKfycbzEBG3jgZIxSriCNeBz2GqrF8UA22bwrwrQpB1YoWCOiLAg-6-AnHRCLlL2QvWfCmi9yQ/exec"
-MASTER_KEY = "bcp"
+# 1️⃣ જૂની શીટ લિંક (સિગ્નલ્સ ફેચ કરવા માટે - Infinity_Live_Data)
+SIGNAL_BASE_URL = "https://script.google.com/macros/s/AKfycbzEBG3jgZIxSriCNeBz2GqrF8UA22bwrwrQpB1YoWCOiLAg-6-AnHRCLlL2QvWfCmi9yQ/exec"
+
+# 2️⃣ 🎯 નવી શીટ લિંક (ક્લાયન્ટ કી ચકાસવા અને લૉગ્સ નોંધવા માટે - Infinity_Client_Auth_Logs)
+# ⚠️ અહીં તમારી નવી શીટની Apps Script Web App URL મૂકો:
+AUTH_BASE_URL = "https://script.google.com/macros/s/AKfycbxOwv-S3vMoF1qHGDMy3m1Acpb5b8VTsLvuVvqRSxxBn5shseCqACR8v1sGSv0UYi0/exec"
 
 # Page Settings
 st.set_page_config(page_title="Infinity Master Combo Hub", page_icon="⚡", layout="wide")
@@ -14,28 +18,54 @@ st.set_page_config(page_title="Infinity Master Combo Hub", page_icon="⚡", layo
 st.title("⚡ Infinity All-In-One Combo Dashboard")
 
 # =====================================================================
-# 🔐 SUBSCRIPTION & SECURITY GATE
+# 🔐 SUBSCRIPTION & DYNAMIC KEY VERIFICATION ENGINE
 # =====================================================================
 if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = False
+if "client_name" not in st.session_state:
+    st.session_state["client_name"] = ""
+
+def verify_client_key(secret_key):
+    try:
+        # નવી ઓથેન્ટિકેશન સ્ક્રિપ્ટ પર રિક્વેસ્ટ મોકલશે
+        response = requests.post(
+            AUTH_BASE_URL,
+            params={"action": "verify_key", "client_key": secret_key},
+            timeout=10
+        )
+        if response.status_code == 200:
+            res_json = response.json()
+            if res_json.get("status") == "success":
+                return True, res_json.get("client_name", "Valued Client")
+            else:
+                return False, res_json.get("message", "Invalid Key")
+    except Exception as e:
+        # જો નવી શીટ લિંક સેટ ન હોય તો માસ્ટર બેકઅપ કી (bcp) ચાલશે
+        if secret_key == "bcp":
+            return True, "Bharat Sir (Master)"
+        return False, f"Connection Error: {e}"
+    return False, "Invalid Key"
 
 if not st.session_state["authenticated"]:
     secret_input = st.text_input("🔑 Enter Master Combo Key:", type="password")
-    if secret_input == MASTER_KEY:
-        st.session_state["authenticated"] = True
-        st.success("🔓 ઇન્ફિનિટી ઓલ-ઇન-વન કોમ્બો ડેશબોર્ડ એક્ટિવ!")
-        st.rerun()
-    elif secret_input != "":
-        st.error("❌ Invalid Key! Please enter the correct master key.")
+    if secret_input != "":
+        is_valid, name_or_msg = verify_client_key(secret_input)
+        if is_valid:
+            st.session_state["authenticated"] = True
+            st.session_state["client_name"] = name_or_msg
+            st.success(f"🔓 ગ્રાહક: {name_or_msg} - ઇન્ફિનિટી ઓલ-ઇન-વન કોમ્બો ડેશબોર્ડ એક્ટિવ!")
+            st.rerun()
+        else:
+            st.error(f"❌ {name_or_msg}")
     st.stop()
 
 # =====================================================================
-# 📊 DATA FETCHING ENGINE (FROM SHEET1 VIA GET)
+# 📊 DATA FETCHING ENGINE (FROM SIGNAL_BASE_URL - ૧૦૦% સુરક્ષિત)
 # =====================================================================
 def get_sheet_data(frame_name):
     try:
-        # ગૂગલ સ્ક્રિપ્ટમાંથી ડેટા ફ્રેમ પેરામીટર સાથે ખેંચશે
-        response = requests.get(f"{BASE_URL}?frame={frame_name}", timeout=15)
+        # જૂની શીટ સ્ક્રિપ્ટમાંથી જ ડેટા લાવશે
+        response = requests.get(f"{SIGNAL_BASE_URL}?frame={frame_name}", timeout=15)
         if response.status_code == 200:
             json_data = response.json()
             if isinstance(json_data, list) and len(json_data) > 0:
@@ -57,6 +87,19 @@ def display_frame_tab(tab_object, frame_label, frame_key):
     with tab_object:
         st.subheader(f"🔥 {frame_label} Signals")
         if st.button(f"🔄 {frame_key.upper()} ડેટા રિફ્રેશ કરો", key=f"btn_{frame_key}"):
+            # રિફ્રેશ એક્ટિવિટી પણ નવી શીટમાં લોગ કરશે
+            try:
+                requests.post(
+                    AUTH_BASE_URL, 
+                    params={
+                        "action": "log_activity", 
+                        "client_name": st.session_state.get("client_name", "User"), 
+                        "frame": frame_key
+                    }, 
+                    timeout=5
+                )
+            except:
+                pass
             st.rerun()
             
         df_data = get_sheet_data(frame_key)
@@ -73,4 +116,4 @@ display_frame_tab(tab2, "5-Minute Scalper Intraday", "5m")
 display_frame_tab(tab3, "10-Minute Confirm Intraday Trend", "10m")
 display_frame_tab(tab4, "30-Minute Swing Trend", "30m")
 
-st.info("ℹ️ માસ્ટર કોમ્બો ડેશબોર્ડ.")
+st.info(f"ℹ️ માસ્ટર કોમ્બો ડેશબોર્ડ | Logged in as: {st.session_state.get('client_name', 'Active User')}")
