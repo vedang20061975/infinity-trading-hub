@@ -10,7 +10,7 @@ SIGNAL_BASE_URL = "https://script.google.com/macros/s/AKfycbzEBG3jgZIxSriCNeBz2G
 
 # 2️⃣ 🎯 નવી શીટ લિંક (ક્લાયન્ટ કી ચકાસવા અને લૉગ્સ નોંધવા માટે - Infinity_Client_Auth_Logs)
 # ⚠️ અહીં તમારી નવી શીટની Apps Script Web App URL મૂકો:
-AUTH_BASE_URL = "https://script.google.com/macros/s/AKfycbw0wHn9VJXcwH-k5k55TPT4kCaYvbU3j8fCuEgWI_NwjQhWQ8dcv7mrTriVhV1VSSWI/exec"
+AUTH_BASE_URL = "https://script.google.com/macros/s/AKfycbyTBKtigj35OjqfsfwD4dK3saPOHxcdx78fOaJnwgdq6xiaHbgB2G9VPZmplNWOLpU0/exec"
 
 # Page Settings
 st.set_page_config(page_title="Infinity Master Combo Hub", page_icon="⚡", layout="wide")
