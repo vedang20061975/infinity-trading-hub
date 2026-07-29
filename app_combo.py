@@ -54,8 +54,18 @@ if not st.session_state["authenticated"]:
     st.stop()
 
 # =====================================================================
-# 📊 DATA FETCHING ENGINE (TIMESTAMP DISPLAY FIX)
+# 📊 DATA FETCHING ENGINE (TIMESTAMP DISPLAY CLEANUP)
 # =====================================================================
+def clean_timestamp_val(val):
+    s = str(val).strip()
+    # જો ISO / UTC ફોર્મેટમાં કન્વર્ટ થઈ ગયું હોય (1899-12-30T...) તો તેને સ્કીપ કરો
+    if "T" in s:
+        # સ્પ્લિટ કરીને સમય મેળવો
+        parts = s.split("T")
+        time_part = parts[1].split(".")[0] if len(parts) > 1 else parts[0]
+        return time_part
+    return s
+
 @st.cache_data(ttl=5)
 def get_sheet_data(frame_name):
     try:
@@ -75,10 +85,9 @@ def get_sheet_data(frame_name):
                 if "Stock" in df.columns:
                     df = df[df["Stock"].astype(str).str.strip() != ""]
                     
-                # 🎯 1899 તારીખવાળો કચરો દૂર કરીને અસલી સમય જ બતાવો
+                # 🎯 Timestamp ક્લીન કરવાની સ્પેશિયલ ફંક્શનેલિટી
                 if "Timestamp" in df.columns:
-                    df["Timestamp"] = df["Timestamp"].astype(str)
-                    df["Timestamp"] = df["Timestamp"].apply(lambda x: x.split("T")[1][:5] if "T" in x else x)
+                    df["Timestamp"] = df["Timestamp"].apply(clean_timestamp_val)
                     
                 return df
     except Exception as e:
@@ -114,12 +123,10 @@ def display_frame_tab(tab_object, frame_label, frame_key):
             expected_cols = ["Stock", "Current Price", "AI KNN Line", "Average Line", "Status", "Timestamp"]
             available_cols = [c for c in expected_cols if c in df_data.columns]
             
-            # Timestamp કોલમને Plain Text દર્શાવવું
             st.dataframe(
                 df_data[available_cols], 
                 use_container_width=True, 
-                hide_index=True,
-                column_config={"Timestamp": st.column_config.TextColumn("Timestamp")}
+                hide_index=True
             )
         else:
             st.info(f"📊 {frame_key.upper()} રનર કનેક્ટેડ છે, બુલિશ સેટઅપની રાહ જોવાઈ રહી છે.")
