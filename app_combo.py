@@ -5,7 +5,7 @@ import pandas as pd
 # =====================================================================
 # 🎯 2 SEPARATE WEBHOOK URLS
 # =====================================================================
-SIGNAL_BASE_URL = "https://script.google.com/macros/s/AKfycbwXlYMa5Dt9jPHOVTWBNE0iQIZg4Fp_ysecDQgi9NiJBWVcoh5U2ctLMJs3rSWYUxhMoQ/exec"
+SIGNAL_BASE_URL = "https://script.google.com/macros/s/AKfycbzFU6dmJMb_Nybhafgn9anSo43PcbjnEaZgFQgyY5AUZxYkcIeWtUDEYuAe-lUCNPtBfg/exec"
 AUTH_BASE_URL = "https://script.google.com/macros/s/AKfycbyTBKtigj35OjqfsfwD4dK3saPOHxcdx78fOaJnwgdq6xiaHbgB2G9VPZmplNWOLpU0/exec"
 
 st.set_page_config(page_title="Infinity Master Combo Hub", page_icon="⚡", layout="wide")
