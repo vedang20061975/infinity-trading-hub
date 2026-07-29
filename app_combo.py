@@ -3,9 +3,9 @@ import requests
 import pandas as pd
 
 # =====================================================================
-# 🎯 2 SEPARATE WEBHOOK URLS
+# 🎯 2 SEPARATE WEBHOOK URLS (WITH BRAND NEW SIGNAL URL)
 # =====================================================================
-SIGNAL_BASE_URL = "https://script.google.com/macros/s/AKfycbzFU6dmJMb_Nybhafgn9anSo43PcbjnEaZgFQgyY5AUZxYkcIeWtUDEYuAe-lUCNPtBfg/exec"
+SIGNAL_BASE_URL = "https://script.google.com/macros/s/AKfycbxJxtQPy5EkPpgqCfer0R0ZKkm1SB_uYNS0q7KKKxXG7ae5z4v3NRLjawcLrkgPXRlxoQ/exec"
 AUTH_BASE_URL = "https://script.google.com/macros/s/AKfycbyTBKtigj35OjqfsfwD4dK3saPOHxcdx78fOaJnwgdq6xiaHbgB2G9VPZmplNWOLpU0/exec"
 
 st.set_page_config(page_title="Infinity Master Combo Hub", page_icon="⚡", layout="wide")
@@ -20,6 +20,7 @@ if "client_name" not in st.session_state:
     st.session_state["client_name"] = ""
 
 def verify_client_key(secret_key):
+    # Master Pass Override
     if secret_key == "bcp":
         return True, "Bharat Sir (Master)"
         
@@ -54,19 +55,19 @@ if not st.session_state["authenticated"]:
     st.stop()
 
 # =====================================================================
-# 📊 DATA FETCHING ENGINE (FIXED FOR RENDER & GOOGLE SHEETS)
+# 📊 DATA FETCHING ENGINE (ROBUST FOR RENDER & GOOGLE SHEETS)
 # =====================================================================
 @st.cache_data(ttl=5)
 def get_sheet_data(frame_name):
     try:
-        # Capitalize Frame Name (30M, 5M, etc.) for Apps Script match
-        clean_frame = str(frame_name).upper()
-        response = requests.get(f"{SIGNAL_BASE_URL}?frame={clean_frame}", timeout=15)
+        clean_frame = str(frame_name).upper().strip()
+        url = f"{SIGNAL_BASE_URL}?frame={clean_frame}"
         
+        response = requests.get(url, timeout=12)
         if response.status_code == 200:
             json_data = response.json()
             
-            # Extract list if response is in dict/object form
+            # Extract nested list if response is dict
             if isinstance(json_data, dict):
                 json_data = json_data.get("data", json_data.get("result", []))
                 
@@ -74,7 +75,7 @@ def get_sheet_data(frame_name):
                 df = pd.DataFrame(json_data)
                 if "Stock" in df.columns:
                     df = df[df["Stock"].astype(str).str.strip() != ""]
-                return df
+                    return df
     except Exception as e:
         pass
     return pd.DataFrame()
