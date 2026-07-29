@@ -20,7 +20,6 @@ if "client_name" not in st.session_state:
     st.session_state["client_name"] = ""
 
 def verify_client_key(secret_key):
-    # Master Pass Override
     if secret_key == "bcp":
         return True, "Bharat Sir (Master)"
         
@@ -55,7 +54,7 @@ if not st.session_state["authenticated"]:
     st.stop()
 
 # =====================================================================
-# 📊 DATA FETCHING ENGINE (EXACT DISPLAY VALUES)
+# 📊 DATA FETCHING ENGINE (TIMESTAMP DISPLAY FIX)
 # =====================================================================
 @st.cache_data(ttl=5)
 def get_sheet_data(frame_name):
@@ -76,8 +75,10 @@ def get_sheet_data(frame_name):
                 if "Stock" in df.columns:
                     df = df[df["Stock"].astype(str).str.strip() != ""]
                     
+                # 🎯 1899 તારીખવાળો કચરો દૂર કરીને અસલી સમય જ બતાવો
                 if "Timestamp" in df.columns:
                     df["Timestamp"] = df["Timestamp"].astype(str)
+                    df["Timestamp"] = df["Timestamp"].apply(lambda x: x.split("T")[1][:5] if "T" in x else x)
                     
                 return df
     except Exception as e:
@@ -112,7 +113,14 @@ def display_frame_tab(tab_object, frame_label, frame_key):
         if not df_data.empty:
             expected_cols = ["Stock", "Current Price", "AI KNN Line", "Average Line", "Status", "Timestamp"]
             available_cols = [c for c in expected_cols if c in df_data.columns]
-            st.dataframe(df_data[available_cols], use_container_width=True, hide_index=True)
+            
+            # Timestamp કોલમને Plain Text દર્શાવવું
+            st.dataframe(
+                df_data[available_cols], 
+                use_container_width=True, 
+                hide_index=True,
+                column_config={"Timestamp": st.column_config.TextColumn("Timestamp")}
+            )
         else:
             st.info(f"📊 {frame_key.upper()} રનર કનેક્ટેડ છે, બુલિશ સેટઅપની રાહ જોવાઈ રહી છે.")
 
