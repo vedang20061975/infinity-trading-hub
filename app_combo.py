@@ -3,7 +3,7 @@ import requests
 import pandas as pd
 
 # =====================================================================
-# 🎯 2 SEPARATE WEBHOOK URLS (WITH BRAND NEW SIGNAL URL)
+# 🎯 2 SEPARATE WEBHOOK URLS
 # =====================================================================
 SIGNAL_BASE_URL = "https://script.google.com/macros/s/AKfycbxJxtQPy5EkPpgqCfer0R0ZKkm1SB_uYNS0q7KKKxXG7ae5z4v3NRLjawcLrkgPXRlxoQ/exec"
 AUTH_BASE_URL = "https://script.google.com/macros/s/AKfycbyTBKtigj35OjqfsfwD4dK3saPOHxcdx78fOaJnwgdq6xiaHbgB2G9VPZmplNWOLpU0/exec"
@@ -55,7 +55,7 @@ if not st.session_state["authenticated"]:
     st.stop()
 
 # =====================================================================
-# 📊 DATA FETCHING ENGINE (ROBUST FOR RENDER & GOOGLE SHEETS)
+# 📊 DATA FETCHING ENGINE (WITH CLEAN TIMESTAMP FORMATTING)
 # =====================================================================
 @st.cache_data(ttl=5)
 def get_sheet_data(frame_name):
@@ -67,15 +67,23 @@ def get_sheet_data(frame_name):
         if response.status_code == 200:
             json_data = response.json()
             
-            # Extract nested list if response is dict
+            # Extract list if nested in dict
             if isinstance(json_data, dict):
                 json_data = json_data.get("data", json_data.get("result", []))
                 
             if isinstance(json_data, list) and len(json_data) > 0:
                 df = pd.DataFrame(json_data)
+                
+                # Filter empty rows
                 if "Stock" in df.columns:
                     df = df[df["Stock"].astype(str).str.strip() != ""]
-                    return df
+                
+                # 🎯 Timestamp Formatting Fix for Render Display
+                if "Timestamp" in df.columns:
+                    df["Timestamp"] = df["Timestamp"].astype(str).apply(
+                        lambda x: x.split("T")[1].split(".")[0] if "T" in str(x) else str(x)
+                    )
+                return df
     except Exception as e:
         pass
     return pd.DataFrame()
