@@ -55,7 +55,7 @@ if not st.session_state["authenticated"]:
     st.stop()
 
 # =====================================================================
-# 📊 DATA FETCHING ENGINE (WITH CLEAN TIMESTAMP FORMATTING)
+# 📊 DATA FETCHING ENGINE (EXACT DISPLAY VALUES)
 # =====================================================================
 @st.cache_data(ttl=5)
 def get_sheet_data(frame_name):
@@ -67,22 +67,18 @@ def get_sheet_data(frame_name):
         if response.status_code == 200:
             json_data = response.json()
             
-            # Extract list if nested in dict
             if isinstance(json_data, dict):
                 json_data = json_data.get("data", json_data.get("result", []))
                 
             if isinstance(json_data, list) and len(json_data) > 0:
                 df = pd.DataFrame(json_data)
                 
-                # Filter empty rows
                 if "Stock" in df.columns:
                     df = df[df["Stock"].astype(str).str.strip() != ""]
-                
-                # 🎯 Timestamp Formatting Fix for Render Display
+                    
                 if "Timestamp" in df.columns:
-                    df["Timestamp"] = df["Timestamp"].astype(str).apply(
-                        lambda x: x.split("T")[1].split(".")[0] if "T" in str(x) else str(x)
-                    )
+                    df["Timestamp"] = df["Timestamp"].astype(str)
+                    
                 return df
     except Exception as e:
         pass
