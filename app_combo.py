@@ -3,7 +3,7 @@ import requests
 import pandas as pd
 
 # =====================================================================
-# 🎯 2 SEPARATE WEBHOOK URLS
+# 🎯 2 SEPARATE WEBHOOK URLS (WITH NEW SIGNAL URL)
 # =====================================================================
 SIGNAL_BASE_URL = "https://script.google.com/macros/s/AKfycbzFU6dmJMb_Nybhafgn9anSo43PcbjnEaZgFQgyY5AUZxYkcIeWtUDEYuAe-lUCNPtBfg/exec"
 AUTH_BASE_URL = "https://script.google.com/macros/s/AKfycbyTBKtigj35OjqfsfwD4dK3saPOHxcdx78fOaJnwgdq6xiaHbgB2G9VPZmplNWOLpU0/exec"
@@ -20,6 +20,10 @@ if "client_name" not in st.session_state:
     st.session_state["client_name"] = ""
 
 def verify_client_key(secret_key):
+    # Master Pass Override
+    if secret_key == "bcp":
+        return True, "Bharat Sir (Master)"
+        
     try:
         response = requests.post(
             AUTH_BASE_URL,
@@ -33,9 +37,8 @@ def verify_client_key(secret_key):
             else:
                 return False, res_json.get("message", "Invalid Key")
     except Exception as e:
-        if secret_key == "bcp":
-            return True, "Bharat Sir (Master)"
         return False, f"Connection Error: {e}"
+        
     return False, "Invalid Key"
 
 if not st.session_state["authenticated"]:
@@ -52,18 +55,26 @@ if not st.session_state["authenticated"]:
     st.stop()
 
 # =====================================================================
-# 📊 DATA FETCHING ENGINE
+# 📊 DATA FETCHING ENGINE (WITH CACHING & FIXED FILTER)
 # =====================================================================
+@st.cache_data(ttl=10)
 def get_sheet_data(frame_name):
     try:
-        response = requests.get(f"{SIGNAL_BASE_URL}?frame={frame_name}", timeout=15)
+        response = requests.get(f"{SIGNAL_BASE_URL}?frame={frame_name.lower()}", timeout=15)
         if response.status_code == 200:
             json_data = response.json()
+            
+            # 🎯 Dict ફોર્મેટ હેન્ડલિંગ (જો Apps Script {data: [...]} મોકલે)
+            if isinstance(json_data, dict) and "data" in json_data:
+                json_data = json_data["data"]
+                
             if isinstance(json_data, list) and len(json_data) > 0:
                 df = pd.DataFrame(json_data)
-                df_filtered = df[df['Status'].str.contains(frame_name, case=False, na=False)]
-                return df_filtered
-    except:
+                # 🎯 કચરો / ખાલી રો દૂર કરવી
+                if "Stock" in df.columns:
+                    df = df[df["Stock"].str.strip() != ""]
+                return df
+    except Exception as e:
         pass
     return pd.DataFrame()
 
@@ -76,6 +87,7 @@ def display_frame_tab(tab_object, frame_label, frame_key):
     with tab_object:
         st.subheader(f"🔥 {frame_label} Signals")
         if st.button(f"🔄 {frame_key.upper()} ડેટા રિફ્રેશ કરો", key=f"btn_{frame_key}"):
+            st.cache_data.clear() # Cache clear કરવા માટે
             try:
                 requests.post(
                     AUTH_BASE_URL, 
