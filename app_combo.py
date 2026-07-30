@@ -1,7 +1,6 @@
 import streamlit as st
 import requests
 import pandas as pd
-import re
 
 # =====================================================================
 # 🎯 WEBHOOK URLS
@@ -55,18 +54,17 @@ if not st.session_state["authenticated"]:
     st.stop()
 
 # =====================================================================
-# 📊 TIMESTAMP CLEANUP FUNCTION (100% CURE FOR 1899 BUG)
+# 📊 TIMESTAMP CLEANUP (EXACT MATCH WITH GOOGLE SHEETS)
 # =====================================================================
 def fix_timestamp_display(val):
     s = str(val).strip()
     
-    # જો 1899 વાળી ISO સ્પીડ / તારીખ આવે તો સમય અલગ કરવો
+    # જો ISO / UTC ફોર્મેટમાં આવે તો કોઈ મેથ્સ કર્યા વગર માત્ર સમય જ કાઢવો
     if "T" in s:
         time_part = s.split("T")[1].replace("Z", "").split(".")[0]
         try:
-            # UTC ટાઈમને GMT+5:30 (IST) માં ફેરવવો
-            time_obj = pd.to_datetime(time_part, format="%H:%M:%S") + pd.Timedelta(hours=5, minutes=30)
-            return time_obj.strftime("%I:%M %p")
+            # ડાયરેક્ટ ટાઈમને AM/PM ફોર્મેટમાં બતાવવો
+            return pd.to_datetime(time_part, format="%H:%M:%S").strftime("%I:%M %p")
         except:
             return time_part
             
@@ -93,7 +91,7 @@ def get_sheet_data(frame_name):
                 if "Stock" in df.columns:
                     df = df[df["Stock"].astype(str).str.strip() != ""]
                     
-                # 🎯 Timestamp ક્લીન કરવાની સર્જિકલ લાઇન્સ
+                # 🎯 શીટમાં દેખાતો બેઠો સમય જ ડિસ્પ્લે કરવો
                 if "Timestamp" in df.columns:
                     df["Timestamp"] = df["Timestamp"].apply(fix_timestamp_display)
                     
