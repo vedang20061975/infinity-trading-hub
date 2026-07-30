@@ -3,7 +3,7 @@ import requests
 import pandas as pd
 
 # =====================================================================
-# 🎯 2 SEPARATE WEBHOOK URLS
+# 🎯 WEBHOOK URLS
 # =====================================================================
 SIGNAL_BASE_URL = "https://script.google.com/macros/s/AKfycbxJxtQPy5EkPpgqCfer0R0ZKkm1SB_uYNS0q7KKKxXG7ae5z4v3NRLjawcLrkgPXRlxoQ/exec"
 AUTH_BASE_URL = "https://script.google.com/macros/s/AKfycbyTBKtigj35OjqfsfwD4dK3saPOHxcdx78fOaJnwgdq6xiaHbgB2G9VPZmplNWOLpU0/exec"
@@ -12,7 +12,7 @@ st.set_page_config(page_title="Infinity Master Combo Hub", page_icon="⚡", layo
 st.title("⚡ Infinity All-In-One Combo Dashboard")
 
 # =====================================================================
-# 🔐 SUBSCRIPTION & DYNAMIC KEY VERIFICATION ENGINE
+# 🔐 LOGIN ENGINE
 # =====================================================================
 if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = False
@@ -22,7 +22,6 @@ if "client_name" not in st.session_state:
 def verify_client_key(secret_key):
     if secret_key == "bcp":
         return True, "Bharat Sir (Master)"
-        
     try:
         response = requests.post(
             AUTH_BASE_URL,
@@ -37,7 +36,6 @@ def verify_client_key(secret_key):
                 return False, res_json.get("message", "Invalid Key")
     except Exception as e:
         return False, f"Connection Error: {e}"
-        
     return False, "Invalid Key"
 
 if not st.session_state["authenticated"]:
@@ -47,26 +45,15 @@ if not st.session_state["authenticated"]:
         if is_valid:
             st.session_state["authenticated"] = True
             st.session_state["client_name"] = name_or_msg
-            st.success(f"🔓 ગ્રાહક: {name_or_msg} - ઇન્ફિનિટી ઓલ-ઇન-વન કોમ્બો ડેશબોર્ડ એક્ટિવ!")
+            st.success(f"🔓 ગ્રાહક: {name_or_msg} - ઇન્ફિનિટી ડેશબોર્ડ એક્ટિવ!")
             st.rerun()
         else:
             st.error(f"❌ {name_or_msg}")
     st.stop()
 
 # =====================================================================
-# 📊 DATA FETCHING ENGINE (TIMESTAMP DISPLAY CLEANUP)
+# 📊 DATA FETCHING ENGINE (NO CACHE & FORCE TEXT)
 # =====================================================================
-def clean_timestamp_val(val):
-    s = str(val).strip()
-    # જો ISO / UTC ફોર્મેટમાં કન્વર્ટ થઈ ગયું હોય (1899-12-30T...) તો તેને સ્કીપ કરો
-    if "T" in s:
-        # સ્પ્લિટ કરીને સમય મેળવો
-        parts = s.split("T")
-        time_part = parts[1].split(".")[0] if len(parts) > 1 else parts[0]
-        return time_part
-    return s
-
-@st.cache_data(ttl=5)
 def get_sheet_data(frame_name):
     try:
         clean_frame = str(frame_name).upper().strip()
@@ -85,9 +72,9 @@ def get_sheet_data(frame_name):
                 if "Stock" in df.columns:
                     df = df[df["Stock"].astype(str).str.strip() != ""]
                     
-                # 🎯 Timestamp ક્લીન કરવાની સ્પેશિયલ ફંક્શનેલિટી
+                # 🎯 Force Timestamp as Plain String
                 if "Timestamp" in df.columns:
-                    df["Timestamp"] = df["Timestamp"].apply(clean_timestamp_val)
+                    df["Timestamp"] = df["Timestamp"].astype(str)
                     
                 return df
     except Exception as e:
@@ -95,7 +82,7 @@ def get_sheet_data(frame_name):
     return pd.DataFrame()
 
 # =====================================================================
-# 🎛️ MULTI-TIMEFRAME TABS CONFIGURATION
+# 🎛️ MULTI-TIMEFRAME TABS
 # =====================================================================
 tab1, tab2, tab3, tab4 = st.tabs(["⚡ 1-Minute Scalper", "🎯 5-Minute Scalper", "📊 10-Minute Trend", "📈 30-Minute Swing"])
 
@@ -104,18 +91,6 @@ def display_frame_tab(tab_object, frame_label, frame_key):
         st.subheader(f"🔥 {frame_label} Signals")
         if st.button(f"🔄 {frame_key.upper()} ડેટા રિફ્રેશ કરો", key=f"btn_{frame_key}"):
             st.cache_data.clear()
-            try:
-                requests.post(
-                    AUTH_BASE_URL, 
-                    params={
-                        "action": "log_activity", 
-                        "client_name": st.session_state.get("client_name", "User"), 
-                        "frame": frame_key
-                    }, 
-                    timeout=5
-                )
-            except:
-                pass
             st.rerun()
             
         df_data = get_sheet_data(frame_key)
@@ -126,7 +101,10 @@ def display_frame_tab(tab_object, frame_label, frame_key):
             st.dataframe(
                 df_data[available_cols], 
                 use_container_width=True, 
-                hide_index=True
+                hide_index=True,
+                column_config={
+                    "Timestamp": st.column_config.TextColumn("Timestamp")
+                }
             )
         else:
             st.info(f"📊 {frame_key.upper()} રનર કનેક્ટેડ છે, બુલિશ સેટઅપની રાહ જોવાઈ રહી છે.")
