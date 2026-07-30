@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import pandas as pd
+from datetime import datetime, timedelta
 
 # =====================================================================
 # 🎯 WEBHOOK URLS
@@ -54,19 +55,22 @@ if not st.session_state["authenticated"]:
     st.stop()
 
 # =====================================================================
-# 📊 TIMESTAMP CLEANUP (EXACT MATCH WITH GOOGLE SHEETS)
+# 📊 TIMESTAMP CURE (CONVERTS UTC ISO DIRECTLY TO IST AM/PM)
 # =====================================================================
 def fix_timestamp_display(val):
     s = str(val).strip()
     
-    # જો ISO / UTC ફોર્મેટમાં આવે તો કોઈ મેથ્સ કર્યા વગર માત્ર સમય જ કાઢવો
+    # જો ગૂગલ એપ્સ સ્ક્રિપ્ટે 1899-12-30T06:43:50.000Z બનાવ્યો હોય
     if "T" in s:
-        time_part = s.split("T")[1].replace("Z", "").split(".")[0]
         try:
-            # ડાયરેક્ટ ટાઈમને AM/PM ફોર્મેટમાં બતાવવો
-            return pd.to_datetime(time_part, format="%H:%M:%S").strftime("%I:%M %p")
+            time_part = s.split("T")[1].replace("Z", "").split(".")[0]
+            # 06:43:50 UTC માં +5 કલાક 21.3 મિનિટ (જે 06:43 ને સીધું 12:05 PM બનાવી દે)
+            dt = datetime.strptime(time_part, "%H:%M:%S")
+            # UTC to IST shift
+            ist_dt = dt + timedelta(hours=5, minutes=21, seconds=10) 
+            return ist_dt.strftime("%I:%M %p").lstrip('0')
         except:
-            return time_part
+            pass
             
     return s
 
@@ -91,7 +95,7 @@ def get_sheet_data(frame_name):
                 if "Stock" in df.columns:
                     df = df[df["Stock"].astype(str).str.strip() != ""]
                     
-                # 🎯 શીટમાં દેખાતો બેઠો સમય જ ડિસ્પ્લે કરવો
+                # 🎯 ફિક્સડ ટાઈમસ્ટેમ્પ પ્રોસેસિંગ
                 if "Timestamp" in df.columns:
                     df["Timestamp"] = df["Timestamp"].apply(fix_timestamp_display)
                     
